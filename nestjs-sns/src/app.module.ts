@@ -12,7 +12,7 @@ import { UsersModel } from './users/entities/users.entity';
     PostsModule,
     TypeOrmModule.forRoot({
       type: 'postgres',
-      host: 'localhost',
+      host: 'docker.internal.local',
       port: 5432,
       username: 'postgres',
       password: 'postgres',
