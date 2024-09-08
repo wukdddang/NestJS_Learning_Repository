@@ -1,6 +1,6 @@
 import { Column, Entity, JoinTable, ManyToMany, OneToMany } from 'typeorm';
 import { RolesEnum } from '../const/roles.const';
-import { PostsModel } from '../../posts/entities/posts.entity';
+import { PostsModel } from '../../posts/entity/posts.entity';
 import { BaseModel } from '../../common/entity/base.entity';
 import {
   IsEmail,
@@ -14,6 +14,7 @@ import { emailValidationMessage } from '../../common/validation-message/email-va
 import { Exclude } from 'class-transformer';
 import { ChatsModel } from '../../chats/entity/chats.entity';
 import { MessagesModel } from '../../chats/messages/entity/messages.entity';
+import { CommentsModel } from '../../posts/comments/entity/comments.entity';
 
 @Entity()
 export class UsersModel extends BaseModel {
@@ -79,4 +80,16 @@ export class UsersModel extends BaseModel {
 
   @OneToMany(() => MessagesModel, (message) => message.author)
   messages: MessagesModel[];
+
+  @OneToMany(() => CommentsModel, (comment) => comment.author)
+  comments: CommentsModel[];
+
+  // 내가 팔로우하는 사람들
+  @ManyToMany(() => UsersModel, (user) => user.followees)
+  @JoinTable()
+  followers: UsersModel[];
+
+  // 나를 팔로우하는 사람들
+  @ManyToMany(() => UsersModel, (user) => user.followers)
+  followees: UsersModel[];
 }

@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { UsersModel } from './entities/users.entity';
+import { UsersModel } from './entity/users.entity';
 import { Repository } from 'typeorm';
 
 @Injectable()
@@ -52,5 +52,38 @@ export class UsersService {
         email,
       },
     });
+  }
+
+  async followUser(followerId: number, followeeId: number) {
+    const user = await this.usersRepository.findOne({
+      relations: {
+        followees: true,
+      },
+      where: {
+        id: followerId,
+      },
+    });
+
+    if (!user) {
+      throw new BadRequestException('존재하지 않는 사용자입니다.');
+    }
+
+    await this.usersRepository.save({
+      ...user,
+      followees: [...user.followees, { id: followeeId }],
+    });
+  }
+
+  async getFollowers(userId: number) {
+    const user = await this.usersRepository.findOne({
+      where: {
+        id: userId,
+      },
+      relations: {
+        followers: true,
+      },
+    });
+
+    return user.followers;
   }
 }

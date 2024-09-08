@@ -1,35 +1,36 @@
 import {
-  // BadRequestException,
   Body,
   Controller,
   Delete,
   Get,
-  // InternalServerErrorException,
-  // InternalServerErrorException,
-  // InternalServerErrorException,
   Param,
   ParseIntPipe,
   Patch,
   Post,
   Query,
-  // UseFilters,
   UseGuards,
+  // UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { PostsService } from './posts.service';
-import { AccessTokenGuard } from '../auth/guard/bearer-token.guard';
+// import { AccessTokenGuard } from '../auth/guard/bearer-token.guard';
 import { User } from '../users/decorator/user.decorator';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { PaginatePostDto } from './dto/paginate-post.dto';
-import { UsersModel } from '../users/entities/users.entity';
+import { UsersModel } from '../users/entity/users.entity';
 import { ImageModelType } from '../common/entity/image.entity';
-import { DataSource } from 'typeorm';
+import { DataSource, QueryRunner as QR } from 'typeorm';
 import { PostsImagesService } from './image/images.service';
 // import { LogInterceptor } from '../common/interceptor/log.interceptor';
 import { TransactionInterceptor } from '../common/interceptor/transaction.interceptor';
-import { QueryRunner as QR } from 'typeorm';
 import { QueryRunner } from '../common/decorator/query-runner.decorator';
+import { Roles } from '../users/decorator/roles.decorator';
+import { RolesEnum } from '../users/const/roles.const';
+import { IsPublic } from '../common/decorator/is-public.decorator';
+import { IsPostMineOrAdminGuard } from './guard/is-post-mine-or-admin.guard';
+// import { IsOwner } from '../common/decorator/is-owner.decorator';
+// import { IsOwnerGuard } from '../common/guard/is-owner.guard';
 // import { HttpExceptionFilter } from '../common/exception-filter/http.exception-filter';
 // import { FileInterceptor } from '@nestjs/platform-express';
 // import { UsersModel } from '../users/entities/users.entity';
@@ -46,18 +47,19 @@ export class PostsController {
   // @UseInterceptors(ClassSerializerInterceptor)
   // @UseInterceptors(LogInterceptor)
   // @UseFilters(HttpExceptionFilter)
+  @IsPublic()
   getPosts(@Query() query: PaginatePostDto) {
     return this.postsService.paginatePosts(query);
   }
 
   @Post('random')
-  @UseGuards(AccessTokenGuard)
   async postPostsRandom(@User() user: UsersModel) {
     await this.postsService.generatePosts(user.id);
     return true;
   }
 
   @Get(':id')
+  @IsPublic()
   getPostById(@Param('id', ParseIntPipe) id: number) {
     return this.postsService.getPostById(id);
   }
@@ -78,7 +80,6 @@ export class PostsController {
   // 실패하면 rollback -> 원상복구
 
   @Post()
-  @UseGuards(AccessTokenGuard)
   @UseInterceptors(TransactionInterceptor)
   async postPosts(
     @User('id') userId: number,
@@ -105,16 +106,21 @@ export class PostsController {
     return this.postsService.getPostById(post.id, qr);
   }
 
-  @Patch(':id')
+  @Patch(':postId')
+  @UseGuards(IsPostMineOrAdminGuard)
   patchPost(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('postId', ParseIntPipe) postId: number,
     @Body() body: UpdatePostDto,
   ) {
-    return this.postsService.updatePost(id, body);
+    return this.postsService.updatePost(postId, body);
   }
 
-  @Delete(':id')
-  deletePost(@Param('id', ParseIntPipe) id: number) {
-    return this.postsService.deletePost(id);
+  @Delete(':postId')
+  @UseGuards(IsPostMineOrAdminGuard)
+  // @Roles(RolesEnum.ADMIN)
+  deletePost(@Param('postId', ParseIntPipe) postId: number) {
+    return this.postsService.deletePost(postId);
   }
+
+  // RBAC -> Role Based Access Control
 }

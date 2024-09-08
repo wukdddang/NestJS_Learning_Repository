@@ -1,10 +1,9 @@
-import {
-  ClassSerializerInterceptor,
-  Controller,
-  Get,
-  UseInterceptors,
-} from '@nestjs/common';
+import { Controller, Get, Param, ParseIntPipe, Post } from '@nestjs/common';
 import { UsersService } from './users.service';
+import { Roles } from './decorator/roles.decorator';
+import { RolesEnum } from './const/roles.const';
+import { UsersModel } from './entity/users.entity';
+import { User } from './decorator/user.decorator';
 
 @Controller('users')
 export class UsersController {
@@ -19,7 +18,22 @@ export class UsersController {
    *
    * deserialization -> 역직렬화 -> 다른 시스템에서 사용되는 데이터의 구조를 현재 시스템에서 사용되는 포맷으로 변환
    */
+  @Roles(RolesEnum.ADMIN)
   getUsers() {
     return this.usersService.getAllUsers();
+  }
+
+  @Get('follow/me')
+  async getFollow(@User() user: UsersModel) {
+    return this.usersService.getFollowers(user.id);
+  }
+
+  @Post('follow/:id')
+  async postFollow(
+    @User() user: UsersModel,
+    @Param('id', ParseIntPipe) followeeId: number,
+  ) {
+    await this.usersService.followUser(user.id, followeeId);
+    return true;
   }
 }

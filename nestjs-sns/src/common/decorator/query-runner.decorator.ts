@@ -3,7 +3,7 @@ import {
   ExecutionContext,
   InternalServerErrorException,
 } from '@nestjs/common';
-import { PostsModel } from '../../posts/entities/posts.entity';
+import { PostsModel } from '../../posts/entity/posts.entity';
 
 export const QueryRunner = createParamDecorator(
   (data: keyof PostsModel, context: ExecutionContext) => {
