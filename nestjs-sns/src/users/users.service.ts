@@ -1,14 +1,27 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UsersModel } from './entity/users.entity';
-import { Repository } from 'typeorm';
+import { QueryRunner, Repository } from 'typeorm';
+import { UserFollowersModel } from './entity/user-followers.entity';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(UsersModel)
     private readonly usersRepository: Repository<UsersModel>,
+    @InjectRepository(UserFollowersModel)
+    private readonly userFollowersRepository: Repository<UserFollowersModel>,
   ) {}
+
+  getUsersRepository(qr?: QueryRunner) {
+    return qr ? qr.manager.getRepository(UsersModel) : this.usersRepository;
+  }
+
+  getUserFollowersRepository(qr?: QueryRunner) {
+    return qr
+      ? qr.manager.getRepository(UserFollowersModel)
+      : this.userFollowersRepository;
+  }
 
   async createUser(user: Pick<UsersModel, 'nickname' | 'email' | 'password'>) {
     // 1) nickname 중복 확인
@@ -54,36 +67,124 @@ export class UsersService {
     });
   }
 
-  async followUser(followerId: number, followeeId: number) {
-    const user = await this.usersRepository.findOne({
-      relations: {
-        followees: true,
-      },
-      where: {
+  async followUser(followerId: number, followeeId: number, qr?: QueryRunner) {
+    const userFollowersRepository = this.getUserFollowersRepository(qr);
+
+    await userFollowersRepository.save({
+      follower: {
         id: followerId,
       },
+      followee: {
+        id: followeeId,
+      },
     });
 
-    if (!user) {
-      throw new BadRequestException('존재하지 않는 사용자입니다.');
-    }
-
-    await this.usersRepository.save({
-      ...user,
-      followees: [...user.followees, { id: followeeId }],
-    });
+    return true;
   }
 
-  async getFollowers(userId: number) {
-    const user = await this.usersRepository.findOne({
-      where: {
+  async getFollowers(userId: number, includeNotConfirmed: boolean) {
+    /**
+     * [
+     *     {
+     *         id: number;
+     *         follower: UsersModel;
+     *         followee: UsersModel;
+     *         isConfirmed: boolean;
+     *         createdAt: Date;
+     *         updatedAt: Date;
+     *     }
+     * ]
+     */
+
+    const where = {
+      followee: {
         id: userId,
       },
+    };
+
+    if (!includeNotConfirmed) {
+      where['isConfirmed'] = true;
+    }
+
+    const users = await this.userFollowersRepository.find({
+      where,
       relations: {
-        followers: true,
+        follower: true,
+        followee: true,
       },
     });
 
-    return user.followers;
+    return users.map((item) => ({
+      id: item.follower.id,
+      nickname: item.follower.nickname,
+      email: item.follower.email,
+      isConfirmed: item.isConfirmed,
+    }));
+  }
+
+  async confirmFollow(
+    followerId: number,
+    followeeId: number,
+    qr?: QueryRunner,
+  ) {
+    const userFollowersRepository = this.getUserFollowersRepository(qr);
+
+    const existing = await userFollowersRepository.findOne({
+      where: {
+        follower: {
+          id: followerId,
+        },
+        followee: {
+          id: followeeId,
+        },
+      },
+
+      relations: {
+        follower: true,
+        followee: true,
+      },
+    });
+
+    if (!existing) {
+      throw new BadRequestException('팔로우 요청이 존재하지 않습니다.');
+    }
+
+    await userFollowersRepository.save({
+      ...existing,
+      isConfirmed: true,
+    });
+
+    return true;
+  }
+
+  async deleteFollow(followerId: number, followeeId: number, qr?: QueryRunner) {
+    const userFollowersRepository = this.getUserFollowersRepository(qr);
+
+    await userFollowersRepository.delete({
+      follower: {
+        id: followerId,
+      },
+      followee: {
+        id: followeeId,
+      },
+    });
+
+    return true;
+  }
+
+  async incrementFollowerCount(userId: number, qr?: QueryRunner) {
+    const userRepository = this.getUsersRepository(qr);
+
+    await userRepository.increment({ id: userId }, 'followerCount', 1);
+
+    return true;
+  }
+
+  async decrementFollowerCount(userId: number, qr?: QueryRunner) {
+    const userRepository = this.getUsersRepository(qr);
+
+    await userRepository.decrement({ id: userId }, 'followerCount', 1);
+
+    return true;
   }
 }

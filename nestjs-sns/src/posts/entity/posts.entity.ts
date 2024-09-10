@@ -32,7 +32,7 @@ export class PostsModel extends BaseModel {
   likeCount: number;
 
   @Column()
-  commentContent: number;
+  commentCount: number;
 
   @OneToMany(() => CommentsModel, (comment) => comment.post)
   comments: CommentsModel[];

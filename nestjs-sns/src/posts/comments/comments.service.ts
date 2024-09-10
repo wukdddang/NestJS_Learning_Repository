@@ -1,7 +1,7 @@
 import {
   BadRequestException,
   Injectable,
-  NotFoundException,
+  // NotFoundException,
 } from '@nestjs/common';
 import { QueryRunner, Repository } from 'typeorm';
 import { CommentsModel } from './entity/comments.entity';
@@ -100,8 +100,10 @@ export class CommentsService {
     return await this.commentsRepository.save(prevComment);
   }
 
-  async deleteComment(commentId: number) {
-    const comment = await this.commentsRepository.findOne({
+  async deleteComment(commentId: number, qr?: QueryRunner) {
+    const repository = this.getRepository(qr);
+
+    const comment = await repository.findOne({
       where: {
         id: commentId,
       },
@@ -111,7 +113,7 @@ export class CommentsService {
       throw new BadRequestException('해당 댓글을 찾을 수 없습니다.');
     }
 
-    await this.commentsRepository.delete(commentId);
+    await repository.delete(commentId);
 
     return commentId;
   }

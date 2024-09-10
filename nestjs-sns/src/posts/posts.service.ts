@@ -24,15 +24,6 @@ import { ConfigService } from '@nestjs/config';
 import { ImageModel } from '../common/entity/image.entity';
 import { DEFAULT_POST_FIND_OPTIONS } from './const/default-post-find-options.const';
 
-export interface PostModel {
-  id: number;
-  author: string;
-  title: string;
-  content: string;
-  likeCount: number;
-  commentContent: number;
-}
-
 @Injectable()
 export class PostsService {
   constructor(
@@ -195,6 +186,30 @@ export class PostsService {
       : this.postsRepository;
   }
 
+  async incrementCommentCount(postId: number, qr?: QueryRunner) {
+    const repository = this.getRepository(qr);
+
+    await repository.increment(
+      {
+        id: postId,
+      },
+      'commentCount',
+      1,
+    );
+  }
+
+  async decrementCommentCount(postId: number, qr?: QueryRunner) {
+    const repository = this.getRepository(qr);
+
+    await repository.decrement(
+      {
+        id: postId,
+      },
+      'commentCount',
+      1,
+    );
+  }
+
   async createPost(authorId: number, postDto: CreatePostDto, qr?: QueryRunner) {
     const repository = this.getRepository(qr);
 
@@ -205,7 +220,7 @@ export class PostsService {
       ...postDto,
       images: [],
       likeCount: 0,
-      commentContent: 0,
+      commentCount: 0,
     });
 
     return await repository.save(post);
