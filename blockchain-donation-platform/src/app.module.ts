@@ -5,10 +5,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserModule } from './user/user.module';
 import { ProjectModule } from './project/project.module';
 import { DonationModule } from './donation/donation.module';
-import { BlockchainModule } from './blockchain/blockchain.module';
-import { UserModule } from './user/user.module';
-import { ProjectModule } from './project/project.module';
-import { DonationModule } from './donation/donation.module';
+// import { BlockchainModule } from './blockchain/blockchain.module';
 import { CommonModule } from './common/common.module';
 
 @Module({
@@ -33,7 +30,7 @@ import { CommonModule } from './common/common.module';
     UserModule,
     ProjectModule,
     DonationModule,
-    BlockchainModule,
+    // BlockchainModule,
     CommonModule,
   ],
 })

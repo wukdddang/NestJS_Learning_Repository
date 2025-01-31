@@ -17,19 +17,23 @@ export class UserService {
   }
 
   findAllUsers() {
-    return `This action returns all user`;
+    return this.userRepository.find();
   }
 
-  findUserById(id: number) {
-    return `This action returns a #${id} user`;
+  findUserById(id: string) {
+    return this.userRepository.findOne({
+      where: {
+        id,
+      },
+    });
   }
 
-  updateUserById(id: number, updateUserDto: UpdateUserDto) {
+  updateUserById(id: string, updateUserDto: UpdateUserDto) {
     const updateUser = this.userRepository.create(updateUserDto);
     return this.userRepository.update(id, updateUser);
   }
 
-  removeUserById(id: number) {
+  removeUserById(id: string) {
     return this.userRepository.delete(id);
   }
 }
