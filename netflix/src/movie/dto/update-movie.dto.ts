@@ -1,29 +1,4 @@
-import { ArrayNotEmpty, IsArray, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
+import { PartialType } from '@nestjs/mapped-types';
+import { CreateMovieDto } from './create-movie.dto';
 
-enum MovieGenre {
-  Fantasy = 'fantasy',
-  Action = 'action',
-}
-
-export class UpdateMovieDto {
-  @IsNotEmpty()
-  @IsOptional()
-  @IsString()
-  title?: string;
-
-  @IsArray()
-  @ArrayNotEmpty()
-  @IsNumber({}, { each: true })
-  @IsOptional()
-  genreIds?: number[];
-
-  @IsNotEmpty()
-  @IsOptional()
-  @IsString()
-  detail?: string;
-
-  @IsNotEmpty()
-  @IsOptional()
-  @IsNumber()
-  directorId?: number;
-}
+export class UpdateMovieDto extends PartialType(CreateMovieDto) {}
