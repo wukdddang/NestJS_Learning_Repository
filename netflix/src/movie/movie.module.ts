@@ -6,8 +6,9 @@ import { Movie } from './entity/movie.entity';
 import { MovieDetail } from './entity/movie-detail.entity';
 import { Director } from 'src/director/entity/director.entity';
 import { Genre } from 'src/genre/entities/genre.entity';
+import { CommonModule } from 'src/common/common.module';
 @Module({
-  imports: [TypeOrmModule.forFeature([Movie, MovieDetail, Director, Genre])], // 사용하고 싶은 엔티티를 넣어주면 된다.
+  imports: [TypeOrmModule.forFeature([Movie, MovieDetail, Director, Genre]), CommonModule], // 사용하고 싶은 엔티티를 넣어주면 된다.
   controllers: [MovieController],
   providers: [MovieService],
 })
