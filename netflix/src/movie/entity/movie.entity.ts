@@ -43,6 +43,9 @@ export class Movie extends BaseTable {
   @JoinColumn()
   detail: MovieDetail;
 
+  @Column({ nullable: false })
+  movieFilePath: string;
+
   @ManyToOne(() => Director, (director) => director.movies, {
     cascade: true, // 영화 생성할 떄 감독 정보를 직접 생성하지 않고 영화만 생성해도 감독 정보를 생성할 수 있음.
     nullable: false,

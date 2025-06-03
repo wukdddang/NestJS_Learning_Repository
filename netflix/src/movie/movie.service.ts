@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateMovieDto } from './dto/create-movie.dto';
 import { UpdateMovieDto } from './dto/update-movie.dto';
 import { Movie } from './entity/movie.entity';
@@ -9,6 +9,12 @@ import { Director } from 'src/director/entity/director.entity';
 import { Genre } from 'src/genre/entities/genre.entity';
 import { GetMoviesDto } from './dto/get-movies.dto';
 import { CommonService } from 'src/common/common.service';
+// import { join } from 'path';
+// import { UploadMovieFileDto } from './dto/upload-movie-file.dto';
+
+import { rename } from 'fs/promises';
+// import { v4 as uuidv4 } from 'uuid';
+
 @Injectable()
 export class MovieService {
   constructor(
@@ -57,6 +63,23 @@ export class MovieService {
     return movie;
   }
 
+  // async uploadMovieFile(file: Express.Multer.File): Promise<UploadMovieFileDto> {
+  //   const movieFolder = join('public', 'movie');
+  //   const split = file.originalname.split('.');
+  //   let extension = 'mp4';
+  //   if (split.length > 1) {
+  //     extension = split[split.length - 1];
+  //   }
+  //   const fileName = `${Date.now()}-${uuidv4()}-${file.originalname}`;
+  //   const filePath = join(movieFolder, fileName).replace(/\\/g, '/');
+
+  //   return {
+  //     originalName: file.originalname,
+  //     fileName,
+  //     filePath,
+  //   };
+  // }
+
   async create(createMovieDto: CreateMovieDto, qr: QueryRunner) {
     const director = await qr.manager.findOne(Director, {
       where: {
@@ -101,6 +124,7 @@ export class MovieService {
           id: movieDetailId,
         },
         director,
+        movieFilePath: createMovieDto.movieFileName,
       })
       .execute();
 
@@ -111,8 +135,6 @@ export class MovieService {
       .relation(Movie, 'genres')
       .of(movieId)
       .add(genres.map((genre) => genre.id));
-
-    throw new InternalServerErrorException('일부러 에러 던짐!');
 
     return await qr.manager.findOne(Movie, {
       where: {

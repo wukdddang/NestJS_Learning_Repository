@@ -7,8 +7,33 @@ import { MovieDetail } from './entity/movie-detail.entity';
 import { Director } from 'src/director/entity/director.entity';
 import { Genre } from 'src/genre/entities/genre.entity';
 import { CommonModule } from 'src/common/common.module';
+// import { MulterModule } from '@nestjs/platform-express';
+// import { diskStorage } from 'multer';
+// import { join } from 'path';
+// import { v4 as uuid } from 'uuid';
+
 @Module({
-  imports: [TypeOrmModule.forFeature([Movie, MovieDetail, Director, Genre]), CommonModule], // 사용하고 싶은 엔티티를 넣어주면 된다.
+  imports: [
+    TypeOrmModule.forFeature([Movie, MovieDetail, Director, Genre]),
+    CommonModule,
+    // MulterModule.register({
+    //   storage: diskStorage({
+    //     /// ..../netflix/public/movie/
+    //     destination: join(process.cwd(), 'public/movie'),
+    //     filename: (req, file, callback) => {
+    //       const split = file.originalname.split('.');
+
+    //       let extension = 'mp4';
+
+    //       if (split.length > 1) {
+    //         extension = split[split.length - 1];
+    //       }
+
+    //       callback(null, `${uuid()}_${Date.now()}.${extension}`);
+    //     },
+    //   }),
+    // }),
+  ], // 사용하고 싶은 엔티티를 넣어주면 된다.
   controllers: [MovieController],
   providers: [MovieService],
 })
