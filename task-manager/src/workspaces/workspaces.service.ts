@@ -64,11 +64,17 @@ export class WorkspacesService {
       throw new ForbiddenException('워크스페이스를 수정할 권한이 없습니다.');
     }
 
-    return this.workspaceModel
+    const updatedWorkspace = await this.workspaceModel
       .findByIdAndUpdate(id, updateWorkspaceDto, { new: true })
       .populate('owner', 'username email')
       .populate('members', 'username email')
       .exec();
+
+    if (!updatedWorkspace) {
+      throw new NotFoundException('워크스페이스를 찾을 수 없습니다.');
+    }
+
+    return updatedWorkspace;
   }
 
   // 워크스페이스 삭제 (소프트 삭제)
@@ -98,11 +104,17 @@ export class WorkspacesService {
       throw new ForbiddenException('이미 워크스페이스 멤버입니다.');
     }
 
-    return this.workspaceModel
+    const updatedWorkspace = await this.workspaceModel
       .findByIdAndUpdate(workspaceId, { $push: { members: new Types.ObjectId(memberId) } }, { new: true })
       .populate('owner', 'username email')
       .populate('members', 'username email')
       .exec();
+
+    if (!updatedWorkspace) {
+      throw new NotFoundException('워크스페이스를 찾을 수 없습니다.');
+    }
+
+    return updatedWorkspace;
   }
 
   // 멤버 제거
@@ -119,10 +131,16 @@ export class WorkspacesService {
       throw new ForbiddenException('워크스페이스 소유자는 제거할 수 없습니다.');
     }
 
-    return this.workspaceModel
+    const updatedWorkspace = await this.workspaceModel
       .findByIdAndUpdate(workspaceId, { $pull: { members: new Types.ObjectId(memberId) } }, { new: true })
       .populate('owner', 'username email')
       .populate('members', 'username email')
       .exec();
+
+    if (!updatedWorkspace) {
+      throw new NotFoundException('워크스페이스를 찾을 수 없습니다.');
+    }
+
+    return updatedWorkspace;
   }
 }
