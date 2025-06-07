@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsMongoId, IsNotEmpty, IsArray, IsEnum, IsDateString } from 'class-validator';
+import { IsString, IsOptional, IsMongoId, IsNotEmpty, IsArray, IsEnum, IsDateString, IsBoolean } from 'class-validator';
 import { Types } from 'mongoose';
 
 export class CreateTaskDto {
@@ -39,4 +39,12 @@ export class CreateTaskDto {
   @IsEnum(['low', 'medium', 'high', 'urgent'])
   @IsOptional()
   priority?: string;
+
+  @IsMongoId()
+  @IsOptional()
+  parentTaskId?: Types.ObjectId;
+
+  @IsBoolean()
+  @IsOptional()
+  isSubtask?: boolean;
 }

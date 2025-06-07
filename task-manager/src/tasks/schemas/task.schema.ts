@@ -37,6 +37,12 @@ export class Task {
 
   @Prop({ default: true })
   isActive: boolean;
+
+  @Prop({ type: Types.ObjectId, ref: 'Task', default: null })
+  parentTaskId?: Types.ObjectId;
+
+  @Prop({ default: false })
+  isSubtask: boolean;
 }
 
 export const TaskSchema = SchemaFactory.createForClass(Task);

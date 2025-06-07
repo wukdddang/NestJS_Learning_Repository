@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsMongoId, IsNotEmpty, IsEnum } from 'class-validator';
+import { IsString, IsNotEmpty, IsMongoId, IsEnum, IsOptional } from 'class-validator';
 import { Types } from 'mongoose';
 
 export class CreateNotificationDto {
