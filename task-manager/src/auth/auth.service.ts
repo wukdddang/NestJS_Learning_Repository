@@ -1,28 +1,23 @@
-import { Injectable, ConflictException, UnauthorizedException, NotFoundException } from '@nestjs/common';
+import { Injectable, ConflictException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
 import * as bcrypt from 'bcrypt';
-import { User, UserDocument } from '../users/schemas/user.schema';
+import { UsersService } from '../users/users.service';
 import { CreateAuthDto } from './dto/create-auth.dto';
 import { LoginDto } from './dto/login.dto';
 
 @Injectable()
 export class AuthService {
   constructor(
-    @InjectModel(User.name) private userModel: Model<UserDocument>,
+    private usersService: UsersService,
     private jwtService: JwtService,
   ) {}
 
   async register(createAuthDto: CreateAuthDto) {
-    const { username, email, password, fullName } = createAuthDto;
+    const { username, email, password } = createAuthDto;
 
     // 중복 사용자 확인
-    const existingUser = await this.userModel.findOne({
-      $or: [{ username }, { email }],
-    });
-
-    if (existingUser) {
+    const userExists = await this.usersService.checkUserExists(username, email);
+    if (userExists) {
       throw new ConflictException('이미 존재하는 사용자명 또는 이메일입니다.');
     }
 
@@ -31,20 +26,18 @@ export class AuthService {
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
     // 사용자 생성
-    const user = new this.userModel({
+    const createUserDto = {
       username,
       email,
       password: hashedPassword,
-      fullName,
       isEmailVerified: false,
       isActive: true,
-    });
+    };
 
-    const savedUser = await user.save();
+    const user = await this.usersService.create(createUserDto);
 
-    // 비밀번호 제외하고 응답
-    const { password: _, ...result } = savedUser.toObject();
-    return result;
+    // 비밀번호 제외하고 응답 (사용자 생성시 이미 비밀번호가 제외되어 반환됨)
+    return user;
   }
 
   async login(loginDto: LoginDto) {
@@ -67,52 +60,34 @@ export class AuthService {
         id: user._id,
         username: user.username,
         email: user.email,
-        fullName: user.fullName,
         avatar: user.avatar,
       },
     };
   }
 
   async validateUser(username: string, password: string): Promise<any> {
-    const user = await this.userModel.findOne({
-      $or: [{ username }, { email: username }],
-      isActive: true,
-    });
+    const user = await this.usersService.findByUsernameOrEmail(username);
 
     if (user && (await bcrypt.compare(password, user.password))) {
-      const { password, ...result } = user.toObject();
+      const { password: _, ...result } = user.toObject();
       return result;
     }
     return null;
   }
 
-  async findUserById(id: string): Promise<User> {
-    const user = await this.userModel.findById(id, '-password');
-    if (!user) {
-      throw new NotFoundException('사용자를 찾을 수 없습니다.');
-    }
-    return user;
+  async findUserById(id: string) {
+    return this.usersService.findOne(id);
   }
 
   async updateProfile(userId: string, updateData: any) {
-    const user = await this.userModel.findByIdAndUpdate(
-      userId,
-      { $set: updateData },
-      { new: true, select: '-password' },
-    );
-
-    if (!user) {
-      throw new NotFoundException('사용자를 찾을 수 없습니다.');
-    }
-
-    return user;
+    return this.usersService.update(userId, updateData);
   }
 
   async changePassword(userId: string, currentPassword: string, newPassword: string) {
-    const user = await this.userModel.findById(userId);
+    const user = await this.usersService.findByUsernameOrEmail(userId);
 
     if (!user) {
-      throw new NotFoundException('사용자를 찾을 수 없습니다.');
+      throw new UnauthorizedException('사용자를 찾을 수 없습니다.');
     }
 
     // 현재 비밀번호 확인
@@ -126,9 +101,7 @@ export class AuthService {
     const hashedNewPassword = await bcrypt.hash(newPassword, saltRounds);
 
     // 비밀번호 업데이트
-    await this.userModel.findByIdAndUpdate(userId, {
-      password: hashedNewPassword,
-    });
+    await this.usersService.updatePassword(userId, hashedNewPassword);
 
     return { message: '비밀번호가 성공적으로 변경되었습니다.' };
   }

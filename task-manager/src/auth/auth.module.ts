@@ -8,15 +8,13 @@ import { AuthController } from './auth.controller';
 import { LocalStrategy } from './strategies/local.strategy';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { RolesGuard } from './guards/roles.guard';
-import { User, UserSchema } from '../users/schemas/user.schema';
+import { UsersModule } from '../users/users.module';
 import { UserProjectRole, UserProjectRoleSchema } from '../user-project-roles/schemas/user-project-role.schema';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([
-      { name: User.name, schema: UserSchema },
-      { name: UserProjectRole.name, schema: UserProjectRoleSchema },
-    ]),
+    UsersModule,
+    MongooseModule.forFeature([{ name: UserProjectRole.name, schema: UserProjectRoleSchema }]),
     PassportModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],

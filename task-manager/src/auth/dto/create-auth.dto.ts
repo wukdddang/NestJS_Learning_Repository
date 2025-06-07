@@ -13,8 +13,4 @@ export class CreateAuthDto {
   @IsNotEmpty()
   @MinLength(6)
   password: string;
-
-  @IsString()
-  @IsOptional()
-  fullName?: string;
 }
