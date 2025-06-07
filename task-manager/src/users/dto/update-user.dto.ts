@@ -11,6 +11,10 @@ export class UpdateUserDto extends PartialType(CreateUserDto) {
   @IsString()
   avatar?: string;
 
+  @IsOptional()
+  @IsString()
+  refreshToken?: string;
+
   // 보안상 비밀번호는 별도 메서드로 변경
   password?: never;
 }

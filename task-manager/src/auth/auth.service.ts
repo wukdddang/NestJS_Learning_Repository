@@ -1,5 +1,6 @@
 import { Injectable, ConflictException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
 import { UsersService } from '../users/users.service';
 import { CreateAuthDto } from './dto/create-auth.dto';
@@ -10,6 +11,7 @@ export class AuthService {
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
+    private configService: ConfigService,
   ) {}
 
   async register(createAuthDto: CreateAuthDto) {
@@ -48,20 +50,13 @@ export class AuthService {
       throw new UnauthorizedException('사용자명 또는 비밀번호가 일치하지 않습니다.');
     }
 
-    const payload = {
-      username: user.username,
-      sub: user._id,
-      email: user.email,
-    };
+    const tokens = await this.generateTokens(user._id, user.username, user.email);
+
+    // Refresh token을 데이터베이스에 저장
+    await this.updateRefreshToken(user._id, tokens.refreshToken);
 
     return {
-      access_token: this.jwtService.sign(payload),
-      user: {
-        id: user._id,
-        username: user.username,
-        email: user.email,
-        avatar: user.avatar,
-      },
+      ...tokens,
     };
   }
 
@@ -104,5 +99,64 @@ export class AuthService {
     await this.usersService.updatePassword(userId, hashedNewPassword);
 
     return { message: '비밀번호가 성공적으로 변경되었습니다.' };
+  }
+
+  async generateTokens(userId: string, username: string, email: string) {
+    const payload = {
+      username,
+      sub: userId,
+      email,
+    };
+
+    const [accessToken, refreshToken] = await Promise.all([
+      this.jwtService.signAsync(payload, {
+        secret: this.configService.get('JWT_SECRET') || 'your-secret-key',
+        expiresIn: this.configService.get('JWT_ACCESS_EXPIRES_IN') || '15m',
+      }),
+      this.jwtService.signAsync(payload, {
+        secret: this.configService.get('JWT_REFRESH_SECRET') || 'your-refresh-secret-key',
+        expiresIn: this.configService.get('JWT_REFRESH_EXPIRES_IN') || '7d',
+      }),
+    ]);
+
+    return {
+      accessToken,
+      refreshToken,
+    };
+  }
+
+  async updateRefreshToken(userId: string, refreshToken: string) {
+    const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
+    await this.usersService.update(userId, { refreshToken: hashedRefreshToken });
+  }
+
+  async refreshTokens(userId: string, refreshToken: string) {
+    const user = await this.usersService.findOne(userId);
+    if (!user || !user.refreshToken) {
+      throw new UnauthorizedException('접근이 거부되었습니다.');
+    }
+
+    const refreshTokenMatches = await bcrypt.compare(refreshToken, user.refreshToken);
+    if (!refreshTokenMatches) {
+      throw new UnauthorizedException('접근이 거부되었습니다.');
+    }
+
+    const tokens = await this.generateTokens(userId, user.username, user.email);
+    await this.updateRefreshToken(userId, tokens.refreshToken);
+
+    return tokens;
+  }
+
+  async logout(userId: string) {
+    await this.usersService.update(userId, { refreshToken: undefined });
+    return { message: '로그아웃되었습니다.' };
+  }
+
+  decodeRefreshToken(refreshToken: string) {
+    try {
+      return this.jwtService.decode(refreshToken);
+    } catch (error) {
+      throw new UnauthorizedException('유효하지 않은 refresh token입니다.');
+    }
   }
 }
