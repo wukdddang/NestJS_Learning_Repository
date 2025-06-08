@@ -57,6 +57,7 @@ export class AuthService {
 
     return {
       ...tokens,
+      userId: user._id,
     };
   }
 

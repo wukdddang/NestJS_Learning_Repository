@@ -25,6 +25,10 @@ export class Project {
 
   @Prop()
   icon?: string;
+
+  // timestamps로 자동 생성되는 필드들
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 export const ProjectSchema = SchemaFactory.createForClass(Project);

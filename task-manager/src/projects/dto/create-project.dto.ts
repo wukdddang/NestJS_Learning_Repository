@@ -14,10 +14,6 @@ export class CreateProjectDto {
   @IsOptional()
   description?: string;
 
-  @IsMongoId()
-  @IsNotEmpty()
-  leadUserId: Types.ObjectId;
-
   @IsString()
   @IsOptional()
   color?: string;
