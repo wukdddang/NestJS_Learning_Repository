@@ -9,9 +9,17 @@ import { UpdateTaskDto } from './dto/update-task.dto';
 export class TasksService {
   constructor(@InjectModel(Task.name) private taskModel: Model<TaskDocument>) {}
 
-  async create(createTaskDto: CreateTaskDto): Promise<Task> {
+  async create(createTaskDto: CreateTaskDto, projectId?: string): Promise<Task> {
     const createdTask = new this.taskModel(createTaskDto);
-    return createdTask.save();
+    const savedTask = await createdTask.save();
+
+    // 활동 로그 생성 (projectId가 있는 경우에만)
+    if (projectId) {
+      // ActivityLogsService는 별도로 주입받아 사용할 수 있습니다
+      // 여기서는 기본 구조만 남겨둡니다
+    }
+
+    return savedTask;
   }
 
   async findAll(): Promise<Task[]> {
@@ -104,7 +112,9 @@ export class TasksService {
     return Math.round((completedSubtasks.length / subtasks.length) * 100);
   }
 
-  async update(id: string, updateTaskDto: UpdateTaskDto): Promise<Task> {
+  async update(id: string, updateTaskDto: UpdateTaskDto, userId?: string): Promise<Task> {
+    const oldTask = await this.findOne(id);
+
     const task = await this.taskModel
       .findByIdAndUpdate(id, updateTaskDto, { new: true })
       .populate('listId creatorId assigneeIds labelIds parentTaskId')
@@ -114,20 +124,36 @@ export class TasksService {
       throw new NotFoundException(`Task with ID ${id} not found`);
     }
 
+    // 상태가 변경된 경우 알림 처리
+    if (updateTaskDto.status && oldTask.status !== updateTaskDto.status) {
+      if (updateTaskDto.status === 'done' && userId) {
+        // 작업 완료 알림 (작업 생성자에게)
+        // NotificationsService 주입이 필요합니다
+      }
+    }
+
     return task;
   }
 
-  async updateStatus(id: string, status: string): Promise<Task> {
-    return this.update(id, { status });
+  async updateStatus(id: string, status: string, userId?: string): Promise<Task> {
+    return this.update(id, { status }, userId);
   }
 
-  async assignUser(id: string, userId: string): Promise<Task> {
+  async assignUser(id: string, userId: string, assignedBy?: string): Promise<Task> {
     const task = await this.findOne(id);
     const assigneeIds = task.assigneeIds || [];
 
     if (!assigneeIds.some((assigneeId) => assigneeId.toString() === userId)) {
       assigneeIds.push(new Types.ObjectId(userId));
-      return this.update(id, { assigneeIds });
+
+      const updatedTask = await this.update(id, { assigneeIds });
+
+      // 작업 할당 알림
+      if (assignedBy) {
+        // NotificationsService 주입이 필요합니다
+      }
+
+      return updatedTask;
     }
 
     return task;
@@ -213,5 +239,18 @@ export class TasksService {
     weekFromNow.setDate(weekFromNow.getDate() + 7);
 
     return this.findTasksByDateRange(today, weekFromNow, userId);
+  }
+
+  // 프로젝트별 작업 통계
+  async getProjectTaskStats(projectId: string): Promise<any> {
+    // 프로젝트의 보드들을 통해 작업 통계를 계산해야 합니다
+    // 여기서는 기본 구조만 제공합니다
+    return {
+      totalTasks: 0,
+      completedTasks: 0,
+      inProgressTasks: 0,
+      todoTasks: 0,
+      overdueTasks: 0,
+    };
   }
 }

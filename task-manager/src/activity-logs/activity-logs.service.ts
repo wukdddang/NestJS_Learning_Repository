@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { ActivityLog, ActivityLogDocument } from './schemas/activity-log.schema';
 import { CreateActivityLogDto } from './dto/create-activity-log.dto';
+import { ActivityActionType } from './enums/action-type.enum';
 
 @Injectable()
 export class ActivityLogsService {
@@ -53,7 +54,7 @@ export class ActivityLogsService {
       projectId: new Types.ObjectId(projectId),
       taskId: new Types.ObjectId(taskId),
       userId: new Types.ObjectId(userId),
-      actionType: 'task_created',
+      actionType: ActivityActionType.TASK_CREATED,
       details: `작업 "${taskTitle}"을 생성했습니다.`,
     });
   }
@@ -71,7 +72,7 @@ export class ActivityLogsService {
       projectId: new Types.ObjectId(projectId),
       taskId: new Types.ObjectId(taskId),
       userId: new Types.ObjectId(userId),
-      actionType: 'task_updated',
+      actionType: ActivityActionType.TASK_UPDATED,
       details: `작업의 ${field}을(를) 변경했습니다.`,
       previousValue,
       newValue,
@@ -89,7 +90,7 @@ export class ActivityLogsService {
       projectId: new Types.ObjectId(projectId),
       taskId: new Types.ObjectId(taskId),
       userId: new Types.ObjectId(userId),
-      actionType: 'task_completed',
+      actionType: ActivityActionType.TASK_COMPLETED,
       details: `작업 "${taskTitle}"을 완료했습니다.`,
     });
   }
@@ -106,7 +107,7 @@ export class ActivityLogsService {
       projectId: new Types.ObjectId(projectId),
       taskId: new Types.ObjectId(taskId),
       userId: new Types.ObjectId(userId),
-      actionType: 'task_assigned',
+      actionType: ActivityActionType.TASK_ASSIGNED,
       details: `작업 "${taskTitle}"을 할당했습니다.`,
       newValue: assigneeId,
     });
@@ -125,7 +126,7 @@ export class ActivityLogsService {
       projectId: new Types.ObjectId(projectId),
       taskId: new Types.ObjectId(taskId),
       userId: new Types.ObjectId(userId),
-      actionType: 'task_moved',
+      actionType: ActivityActionType.TASK_MOVED,
       details: `작업 "${taskTitle}"을 이동했습니다.`,
       previousValue: previousListName,
       newValue: newListName,
@@ -143,7 +144,7 @@ export class ActivityLogsService {
       projectId: new Types.ObjectId(projectId),
       taskId: new Types.ObjectId(taskId),
       userId: new Types.ObjectId(userId),
-      actionType: 'comment_added',
+      actionType: ActivityActionType.COMMENT_ADDED,
       details: `작업 "${taskTitle}"에 댓글을 추가했습니다.`,
     });
   }
@@ -160,7 +161,7 @@ export class ActivityLogsService {
       projectId: new Types.ObjectId(projectId),
       taskId: new Types.ObjectId(taskId),
       userId: new Types.ObjectId(userId),
-      actionType: 'attachment_added',
+      actionType: ActivityActionType.ATTACHMENT_ADDED,
       details: `작업 "${taskTitle}"에 파일 "${fileName}"을 첨부했습니다.`,
     });
   }
@@ -176,7 +177,7 @@ export class ActivityLogsService {
     return this.create({
       projectId: new Types.ObjectId(projectId),
       userId: new Types.ObjectId(userId),
-      actionType: 'project_updated',
+      actionType: ActivityActionType.PROJECT_UPDATED,
       details: `프로젝트의 ${field}을(를) 변경했습니다.`,
       previousValue,
       newValue,

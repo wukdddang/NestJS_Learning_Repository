@@ -1,8 +1,11 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
+import { ActivityActionType, ACTIVITY_ACTION_TYPES } from '../enums/action-type.enum';
 
+// 활동 로그 문서 타입
 export type ActivityLogDocument = ActivityLog & Document;
 
+// 활동 로그 스키마 정의
 @Schema({ timestamps: true })
 export class ActivityLog {
   @Prop({ type: Types.ObjectId, ref: 'Project', required: true })
@@ -16,18 +19,10 @@ export class ActivityLog {
 
   @Prop({
     required: true,
-    enum: [
-      'task_created',
-      'task_updated',
-      'task_completed',
-      'task_assigned',
-      'task_moved',
-      'comment_added',
-      'attachment_added',
-      'project_updated',
-    ],
+    enum: ACTIVITY_ACTION_TYPES,
+    type: String,
   })
-  actionType: string;
+  actionType: ActivityActionType;
 
   @Prop({ required: true })
   details: string;
@@ -37,6 +32,9 @@ export class ActivityLog {
 
   @Prop()
   newValue?: string;
+
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export const ActivityLogSchema = SchemaFactory.createForClass(ActivityLog);

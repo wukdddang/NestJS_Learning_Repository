@@ -1,5 +1,6 @@
 import { IsString, IsNotEmpty, IsMongoId, IsEnum, IsOptional } from 'class-validator';
 import { Types } from 'mongoose';
+import { ActivityActionType, ACTIVITY_ACTION_TYPES } from '../enums/action-type.enum';
 
 export class CreateActivityLogDto {
   @IsMongoId()
@@ -14,18 +15,9 @@ export class CreateActivityLogDto {
   @IsNotEmpty()
   userId: Types.ObjectId;
 
-  @IsEnum([
-    'task_created',
-    'task_updated',
-    'task_completed',
-    'task_assigned',
-    'task_moved',
-    'comment_added',
-    'attachment_added',
-    'project_updated',
-  ])
+  @IsEnum(ACTIVITY_ACTION_TYPES)
   @IsNotEmpty()
-  actionType: string;
+  actionType: ActivityActionType;
 
   @IsString()
   @IsNotEmpty()

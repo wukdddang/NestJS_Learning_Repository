@@ -14,6 +14,8 @@ import { AttachmentsModule } from './attachments/attachments.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { ActivityLogsModule } from './activity-logs/activity-logs.module';
 import { UserProjectRolesModule } from './user-project-roles/user-project-roles.module';
+import { CalendarModule } from './calendar/calendar.module';
+import { DashboardModule } from './dashboard/dashboard.module';
 
 @Module({
   imports: [
@@ -32,6 +34,8 @@ import { UserProjectRolesModule } from './user-project-roles/user-project-roles.
     NotificationsModule,
     ActivityLogsModule,
     UserProjectRolesModule,
+    CalendarModule,
+    DashboardModule,
   ],
   controllers: [],
   providers: [],
