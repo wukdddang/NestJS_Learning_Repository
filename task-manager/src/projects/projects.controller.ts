@@ -16,12 +16,12 @@ export class ProjectsController {
   }
 
   @Get()
-  findAll(@Request() req: any, @Query('workspaceId') workspaceId?: string) {
-    const userId = req.user.id;
-    if (workspaceId) {
+  findAll(@Query('workspaceId') workspaceId?: string, @Request() req?: any) {
+    if (workspaceId && req) {
+      const userId = req.user.id;
       return this.projectsService.findByWorkspace(workspaceId, userId);
     }
-    return this.projectsService.findByUser(userId);
+    return this.projectsService.findAll();
   }
 
   @Get('my-projects')

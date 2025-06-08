@@ -1,30 +1,43 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Project, ProjectDocument } from './schemas/project.schema';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
+import { User, UserDocument } from '../users/schemas/user.schema';
 
 @Injectable()
 export class ProjectsService {
-  constructor(@InjectModel(Project.name) private projectModel: Model<ProjectDocument>) {}
+  constructor(
+    @InjectModel(Project.name) private projectModel: Model<ProjectDocument>,
+    @InjectModel(User.name) private userModel: Model<UserDocument>,
+  ) {}
 
   async create(createProjectDto: CreateProjectDto, userId: string): Promise<Project> {
-    // leadUserId를 현재 사용자로 설정 (JWT에서 추출된 사용자)
+    // leadUserId가 유효한 사용자인지 확인
+    const leadUser = await this.userModel.findById(createProjectDto.leadUserId).exec();
+    if (!leadUser || !leadUser.isActive) {
+      throw new BadRequestException(`Lead user with ID ${createProjectDto.leadUserId} not found or inactive`);
+    }
+
+    // DTO에서 받은 leadUserId를 사용 (클라이언트에서 선택)
     const projectData = {
       ...createProjectDto,
-      leadUserId: new Types.ObjectId(userId),
+      leadUserId: new Types.ObjectId(createProjectDto.leadUserId),
     };
     const createdProject = new this.projectModel(projectData);
     return createdProject.save();
   }
 
   async findAll(): Promise<Project[]> {
-    return this.projectModel.find({ isActive: true }).populate('workspaceId leadUserId').exec();
+    const projects = await this.projectModel.find({ isActive: true }).populate('workspaceId leadUserId').exec();
+
+    return projects;
   }
 
   async findByUser(userId: string): Promise<Project[]> {
-    return this.projectModel
+    console.log('Finding projects for user:', userId);
+    const projects = await this.projectModel
       .find({
         $or: [
           { leadUserId: new Types.ObjectId(userId) },
@@ -34,6 +47,8 @@ export class ProjectsService {
       })
       .populate('workspaceId leadUserId')
       .exec();
+
+    return projects;
   }
 
   async findByWorkspace(workspaceId: string, userId: string): Promise<Project[]> {
