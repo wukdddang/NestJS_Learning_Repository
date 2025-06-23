@@ -11,6 +11,155 @@ NestJS + Mongoose를 사용하여 구현되었습니다.
 
 ```mermaid
 erDiagram
+    User {
+        ObjectId _id PK
+        string username UK
+        string email UK
+        string password
+        string fullName
+        string avatar
+        boolean isEmailVerified
+        boolean isActive
+        date createdAt
+        date updatedAt
+    }
+
+    Workspace {
+        ObjectId _id PK
+        ObjectId owner FK
+        string name
+        string description
+        ObjectId[] members
+        boolean isActive
+        date createdAt
+        date updatedAt
+    }
+
+    Project {
+        ObjectId _id PK
+        ObjectId workspaceId FK
+        string name
+        string description
+        ObjectId leadUserId FK
+        boolean isActive
+        string color
+        string icon
+        date createdAt
+        date updatedAt
+    }
+
+    Board {
+        ObjectId _id PK
+        ObjectId projectId FK
+        string name
+        string description
+        number orderIndex
+        boolean isActive
+        date createdAt
+        date updatedAt
+    }
+
+    List {
+        ObjectId _id PK
+        ObjectId boardId FK
+        string name
+        number orderIndex
+        boolean isActive
+        date createdAt
+        date updatedAt
+    }
+
+    Task {
+        ObjectId _id PK
+        ObjectId listId FK
+        string title
+        string description
+        date dueDate
+        ObjectId creatorId FK
+        ObjectId[] assigneeIds
+        ObjectId[] labelIds
+        number orderIndex
+        string status
+        string priority
+        boolean isActive
+        date createdAt
+        date updatedAt
+    }
+
+    Label {
+        ObjectId _id PK
+        ObjectId projectId FK
+        string name
+        string color
+        string description
+        boolean isActive
+        date createdAt
+        date updatedAt
+    }
+
+    Comment {
+        ObjectId _id PK
+        ObjectId taskId FK
+        ObjectId userId FK
+        string text
+        ObjectId parentCommentId FK
+        boolean isEdited
+        boolean isActive
+        date createdAt
+        date updatedAt
+    }
+
+    Attachment {
+        ObjectId _id PK
+        ObjectId taskId FK
+        ObjectId uploadedBy FK
+        string fileName
+        string originalName
+        string fileUrl
+        number fileSize
+        string mimeType
+        boolean isActive
+        date createdAt
+        date updatedAt
+    }
+
+    ActivityLog {
+        ObjectId _id PK
+        ObjectId projectId FK
+        ObjectId taskId FK
+        ObjectId userId FK
+        string actionType
+        string details
+        string previousValue
+        string newValue
+        date createdAt
+        date updatedAt
+    }
+
+    Notification {
+        ObjectId _id PK
+        ObjectId userId FK
+        string message
+        string type
+        boolean isRead
+        ObjectId relatedTaskId FK
+        ObjectId relatedProjectId FK
+        ObjectId triggeredBy FK
+        boolean isActive
+        date createdAt
+        date updatedAt
+    }
+
+    UserProjectRole {
+        ObjectId _id PK
+        ObjectId userId FK
+        ObjectId projectId FK
+        string role
+        boolean isActive
+        date createdAt
+        date updatedAt
+    }
+
     User ||--o{ Workspace : owns
     User ||--o{ Project : leads
     User ||--o{ Task : creates

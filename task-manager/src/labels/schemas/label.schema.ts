@@ -19,6 +19,9 @@ export class Label {
 
   @Prop({ default: true })
   isActive: boolean;
+
+  @Prop({ type: [{ type: Types.ObjectId, ref: 'Task' }], default: [] })
+  taskIds: Types.ObjectId[];
 }
 
 export const LabelSchema = SchemaFactory.createForClass(Label);
