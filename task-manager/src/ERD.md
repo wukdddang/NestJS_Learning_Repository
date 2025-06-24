@@ -3,14 +3,95 @@
 ## 📋 프로젝트 개요
 
 개인/팀 작업 관리 시스템을 위한 MongoDB 기반 데이터베이스 설계입니다.
-NestJS + Mongoose를 사용하여 구현되었습니다.
+NestJS + Mongoose를 사용하여 구현되었으며, 이벤트 기반 아키텍처를 적용한 알림 시스템을 포함합니다.
+
+### 🏗️ **주요 기능 모듈**
+
+- **Core Modules**: 사용자, 워크스페이스, 프로젝트, 작업 관리
+- **Notification System**: 이벤트 기반 실시간 알림 (인앱, 이메일, WebSocket)
+- **Search System**: 전역 검색 (작업, 프로젝트, 사용자, 댓글)
+- **File Management**: 첨부파일 업로드 및 관리
+- **Activity Tracking**: 사용자 활동 로그 및 감사
 
 ---
 
-## 📊 엔티티 관계도
+## 📊 엔티티 관계도 (도메인별 그룹화)
+
+### 🏗️ **전체 시스템 아키텍처**
+
+```mermaid
+graph TB
+    subgraph "👤 User Management"
+        U[User]
+    end
+
+    subgraph "🏢 Workspace Domain"
+        WS[Workspace]
+        P[Project]
+        UPR[UserProjectRole]
+    end
+
+    subgraph "📋 Task Management"
+        B[Board]
+        L[List]
+        T[Task]
+        LB[Label]
+    end
+
+    subgraph "💬 Communication"
+        C[Comment]
+        AT[Attachment]
+    end
+
+    subgraph "📊 Tracking & Monitoring"
+        AL[ActivityLog]
+        N[Notification]
+    end
+
+    %% Domain connections
+    U --> WS
+    U --> P
+    U --> T
+    U --> C
+    U --> AT
+    U --> AL
+    U --> N
+    U --> UPR
+
+    WS --> P
+    P --> B
+    P --> LB
+    P --> UPR
+    P --> AL
+
+    B --> L
+    L --> T
+    T --> C
+    T --> AT
+    T --> AL
+    T --> N
+
+    LB --> T
+
+    style U fill:#e1f5fe
+    style WS fill:#f3e5f5
+    style P fill:#f3e5f5
+    style UPR fill:#f3e5f5
+    style B fill:#e8f5e8
+    style L fill:#e8f5e8
+    style T fill:#e8f5e8
+    style LB fill:#e8f5e8
+    style C fill:#fff3e0
+    style AT fill:#fff3e0
+    style AL fill:#fce4ec
+    style N fill:#fce4ec
+```
+
+### 📝 **상세 엔티티 관계도**
 
 ```mermaid
 erDiagram
+    %% 👤 User Management Domain
     User {
         ObjectId _id PK
         string username UK
@@ -24,6 +105,7 @@ erDiagram
         date updatedAt
     }
 
+    %% 🏢 Workspace Management Domain
     Workspace {
         ObjectId _id PK
         ObjectId owner FK
@@ -48,6 +130,17 @@ erDiagram
         date updatedAt
     }
 
+    UserProjectRole {
+        ObjectId _id PK
+        ObjectId userId FK
+        ObjectId projectId FK
+        string role
+        boolean isActive
+        date createdAt
+        date updatedAt
+    }
+
+    %% 📋 Task Management Domain
     Board {
         ObjectId _id PK
         ObjectId projectId FK
@@ -82,6 +175,8 @@ erDiagram
         string status
         string priority
         boolean isActive
+        ObjectId parentTaskId FK
+        boolean isSubtask
         date createdAt
         date updatedAt
     }
@@ -97,6 +192,7 @@ erDiagram
         date updatedAt
     }
 
+    %% 💬 Communication Domain
     Comment {
         ObjectId _id PK
         ObjectId taskId FK
@@ -123,6 +219,7 @@ erDiagram
         date updatedAt
     }
 
+    %% 📊 Tracking & Monitoring Domain
     ActivityLog {
         ObjectId _id PK
         ObjectId projectId FK
@@ -150,72 +247,84 @@ erDiagram
         date updatedAt
     }
 
-    UserProjectRole {
-        ObjectId _id PK
-        ObjectId userId FK
-        ObjectId projectId FK
-        string role
-        boolean isActive
-        date createdAt
-        date updatedAt
-    }
+    %% 👤 User Management Relations
+    User ||--o{ Workspace : "owns"
+    User ||--o{ Project : "leads"
+    User ||--o{ UserProjectRole : "has roles"
+    User ||--o{ Task : "creates"
+    User ||--o{ Comment : "writes"
+    User ||--o{ Attachment : "uploads"
+    User ||--o{ ActivityLog : "performs"
+    User ||--o{ Notification : "receives"
 
-    User ||--o{ Workspace : owns
-    User ||--o{ Project : leads
-    User ||--o{ Task : creates
-    User ||--o{ UserProjectRole : has
-    User ||--o{ Comment : writes
-    User ||--o{ Attachment : uploads
-    User ||--o{ ActivityLog : performs
-    User ||--o{ Notification : receives
-
-    Workspace ||--o{ Project : contains
-    Workspace }o--|| User : "owned by"
-
-    Project ||--o{ Board : contains
-    Project ||--o{ Label : has
-    Project ||--o{ ActivityLog : tracks
+    %% 🏢 Workspace Management Relations
+    Workspace ||--o{ Project : "contains"
+    Project ||--o{ Board : "has boards"
+    Project ||--o{ Label : "defines labels"
     Project ||--o{ UserProjectRole : "has members"
-    Project }o--|| User : "led by"
-    Project }o--|| Workspace : "belongs to"
+    Project ||--o{ ActivityLog : "tracks activities"
+    UserProjectRole }o--|| User : "assigns user"
+    UserProjectRole }o--|| Project : "to project"
 
-    Board ||--o{ List : contains
-    Board }o--|| Project : "belongs to"
-
-    List ||--o{ Task : contains
-    List }o--|| Board : "belongs to"
-
-    Task ||--o{ Comment : has
-    Task ||--o{ Attachment : has
-    Task ||--o{ ActivityLog : generates
-    Task ||--o{ Notification : triggers
-    Task }o--|| List : "belongs to"
-    Task }o--|| User : "created by"
+    %% 📋 Task Management Relations
+    Board ||--o{ List : "contains"
+    List ||--o{ Task : "holds"
     Task }o--o{ User : "assigned to"
     Task }o--o{ Label : "tagged with"
+    Task ||--o{ Task : "has subtasks"
 
-    Label }o--|| Project : "belongs to"
-    Label }o--o{ Task : "tags"
-
-    Comment }o--|| Task : "belongs to"
-    Comment }o--|| User : "written by"
+    %% 💬 Communication Relations
+    Task ||--o{ Comment : "has comments"
+    Task ||--o{ Attachment : "has files"
     Comment }o--o| Comment : "replies to"
 
-    Attachment }o--|| Task : "belongs to"
-    Attachment }o--|| User : "uploaded by"
-
-    ActivityLog }o--|| Project : "tracks"
-    ActivityLog }o--o| Task : "relates to"
-    ActivityLog }o--|| User : "performed by"
-
-    Notification }o--|| User : "sent to"
-    Notification }o--o| Task : "relates to"
-    Notification }o--o| Project : "relates to"
+    %% 📊 Tracking Relations
+    Task ||--o{ ActivityLog : "generates logs"
+    Task ||--o{ Notification : "triggers alerts"
+    Project ||--o{ ActivityLog : "overall tracking"
     Notification }o--o| User : "triggered by"
-
-    UserProjectRole }o--|| User : "assigns"
-    UserProjectRole }o--|| Project : "defines role in"
 ```
+
+### 🎯 **도메인별 상세 설명**
+
+#### 👤 **User Management (사용자 관리)**
+
+- **User**: 시스템의 모든 사용자 정보를 관리하는 핵심 엔티티
+- 사용자 인증, 프로필 관리, 이메일 인증 상태 등을 추적
+- 시스템 내 모든 활동의 주체가 되는 중앙집중형 설계
+
+#### 🏢 **Workspace Domain (워크스페이스 영역)**
+
+- **Workspace**: 최상위 조직 단위로 여러 프로젝트를 포함
+- **Project**: 실제 작업이 이루어지는 프로젝트 단위
+- **UserProjectRole**: 사용자의 프로젝트별 권한과 역할을 세밀하게 관리
+- 계층적 구조로 대규모 조직의 복잡한 권한 체계 지원
+
+#### 📋 **Task Management (작업 관리)**
+
+- **Board → List → Task**: 칸반 보드의 3단계 계층 구조
+- **Label**: 작업 분류와 필터링을 위한 태그 시스템
+- **Task**: 하위 작업(subtask) 지원으로 복잡한 작업 분해 가능
+- 유연한 작업 조직화와 우선순위 관리 체계
+
+#### 💬 **Communication (커뮤니케이션)**
+
+- **Comment**: 실시간 협업을 위한 댓글 시스템 (중첩 댓글 지원)
+- **Attachment**: 파일 첨부 및 문서 공유 기능
+- 작업 중심의 상황별 커뮤니케이션 지원
+
+#### 📊 **Tracking & Monitoring (추적 및 모니터링)**
+
+- **ActivityLog**: 모든 시스템 활동에 대한 감사 추적
+- **Notification**: 이벤트 기반 실시간 알림 시스템
+- 완전한 투명성과 실시간 상황 인식 제공
+
+### 🔄 **도메인 간 주요 상호작용**
+
+1. **사용자 중심 설계**: User가 모든 도메인의 중심축 역할
+2. **계층적 권한**: Workspace → Project → Task 순으로 권한 상속
+3. **이벤트 기반 알림**: 모든 도메인의 변경사항이 Notification으로 전파
+4. **완전한 추적성**: ActivityLog가 모든 도메인의 변경사항 기록
 
 ---
 
@@ -501,6 +610,16 @@ erDiagram
 
 - `task_assigned`, `task_due`, `comment_added`, `project_invite`, `task_completed`
 
+**알림 처리 방식 (이벤트 기반):**
+
+- **이벤트 발행**: 다른 서비스에서 `NotificationEventHelper`를 통해 이벤트 발행
+- **이벤트 리스너**: `NotificationsService`에서 `@OnEvent` 데코레이터로 이벤트 수신
+- **다중 채널 알림**:
+  - 📱 **인앱 알림**: MongoDB에 저장
+  - 📧 **이메일 알림**: SMTP를 통한 이메일 발송
+  - ⚡ **실시간 알림**: WebSocket을 통한 즉시 푸시
+- **비동기 처리**: 순환 의존성 없는 완전 비동기 처리
+
 **관계:**
 
 - User (N:1) - 알림 수신자
@@ -555,6 +674,18 @@ erDiagram
 1. **UserProjectRole** - 프로젝트별 세분화된 권한
 2. **Workspace.members** - 워크스페이스 멤버십
 
+### **이벤트 기반 시스템 (Event-Driven)**
+
+1. **Notification Events** - 순환 의존성 없는 알림 처리
+2. **Real-time Updates** - WebSocket을 통한 실시간 통신
+3. **Email Integration** - SMTP를 통한 이메일 알림
+
+### **검색 시스템 (Search System)**
+
+1. **Global Search** - 모든 엔티티에 대한 통합 검색
+2. **Type-specific Search** - 엔티티별 세분화된 검색
+3. **Full-text Search** - MongoDB 텍스트 검색 활용
+
 ---
 
 ## 🎯 인덱스 전략
@@ -572,6 +703,12 @@ Notification: { userId: 1, isRead: 1, createdAt: -1 }
 // 복합 인덱스
 UserProjectRole: { userId: 1, projectId: 1 } // Unique
 Task: { listId: 1, orderIndex: 1 }
+
+// 검색 최적화 인덱스
+Task: { title: "text", description: "text" }
+Project: { name: "text", description: "text" }
+User: { username: "text", fullName: "text" }
+Comment: { text: "text" }
 ```
 
 ### **데이터 무결성**
@@ -584,13 +721,30 @@ Task: { listId: 1, orderIndex: 1 }
 
 ## 📊 확장 가능성
 
+### **현재 구현된 추가 기능**
+
+1. **✅ Email System** - SMTP 기반 이메일 알림
+2. **✅ Search System** - 전역 통합 검색 기능
+3. **✅ Event-Driven Architecture** - 순환 의존성 없는 이벤트 기반 알림
+4. **✅ Real-time Notifications** - WebSocket 기반 실시간 알림
+5. **✅ File Upload** - 첨부파일 업로드 및 관리
+
 ### **향후 추가 가능한 엔티티**
 
-1. **Team** - 팀 관리
+1. **Team** - 팀 관리 및 팀별 권한
 2. **Template** - 프로젝트/작업 템플릿
-3. **Integration** - 외부 서비스 연동
-4. **Webhook** - 이벤트 훅
-5. **Dashboard** - 대시보드 설정
-6. **Report** - 리포트 생성
+3. **Integration** - 외부 서비스 연동 (Slack, Discord, etc.)
+4. **Webhook** - 이벤트 훅 및 외부 API 연동
+5. **Dashboard** - 개인화된 대시보드 설정
+6. **Report** - 리포트 생성 및 분석
+7. **Automation** - 자동화 규칙 및 트리거
+8. **Calendar Integration** - 외부 캘린더 연동 (Google, Outlook)
+
+### **아키텍처 특장점**
+
+- **📈 확장성**: 이벤트 기반 구조로 새로운 기능 추가 용이
+- **🔄 유연성**: 마이크로서비스 전환 가능한 구조
+- **⚡ 성능**: MongoDB 인덱스 최적화 및 비동기 처리
+- **🛡️ 안정성**: 소프트 삭제 및 데이터 무결성 보장
 
 이 ERD는 확장 가능하고 유연한 구조로 설계되어 추후 기능 추가에 대응할 수 있습니다.

@@ -5,12 +5,14 @@ import { Project, ProjectDocument } from './schemas/project.schema';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { User, UserDocument } from '../users/schemas/user.schema';
+import { NotificationEventHelper } from '../notifications/utils/notification-event.helper';
 
 @Injectable()
 export class ProjectsService {
   constructor(
     @InjectModel(Project.name) private projectModel: Model<ProjectDocument>,
     @InjectModel(User.name) private userModel: Model<UserDocument>,
+    private readonly notificationEventHelper: NotificationEventHelper,
   ) {}
 
   async create(createProjectDto: CreateProjectDto, userId: string): Promise<Project> {
@@ -120,6 +122,18 @@ export class ProjectsService {
       throw new ForbiddenException('Only project lead can add members');
     }
 
+    // 프로젝트 초대 이벤트 발행
+    if (memberId !== userId) {
+      this.notificationEventHelper.emitProjectInvite(
+        memberId,
+        projectId,
+        project.name,
+        userId,
+        '프로젝트 리더', // 실제로는 User 정보를 조회해야 함
+        'member@example.com', // 실제로는 User 정보를 조회해야 함
+      );
+    }
+
     // 추후 UserProjectRole 테이블에 멤버 추가 로직 구현
     return { message: 'Member added successfully', projectId, memberId };
   }
@@ -164,6 +178,28 @@ export class ProjectsService {
       createdAt: project.createdAt,
       updatedAt: project.updatedAt,
     };
+  }
+
+  // 프로젝트 검색
+  async searchProjects(query: string, userId?: string): Promise<Project[]> {
+    const searchCriteria: any = {
+      isActive: true,
+      $or: [{ name: { $regex: query, $options: 'i' } }, { description: { $regex: query, $options: 'i' } }],
+    };
+
+    // 사용자별 프로젝트 필터링 (선택적)
+    if (userId) {
+      searchCriteria.$and = [
+        {
+          $or: [
+            { leadUserId: new Types.ObjectId(userId) },
+            // 추후 멤버 관계가 구현되면 멤버로 참여한 프로젝트도 포함
+          ],
+        },
+      ];
+    }
+
+    return this.projectModel.find(searchCriteria).populate('workspaceId leadUserId').sort({ name: 1 }).limit(20).exec();
   }
 
   // 프로젝트 접근 권한 확인 헬퍼 메소드

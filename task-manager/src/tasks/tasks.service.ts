@@ -4,12 +4,16 @@ import { Model, Types } from 'mongoose';
 import { Task, TaskDocument } from './schemas/task.schema';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
+import { NotificationEventHelper } from '../notifications/utils/notification-event.helper';
 
 @Injectable()
 export class TasksService {
-  constructor(@InjectModel(Task.name) private taskModel: Model<TaskDocument>) {}
+  constructor(
+    @InjectModel(Task.name) private taskModel: Model<TaskDocument>,
+    private readonly notificationEventHelper: NotificationEventHelper,
+  ) {}
 
-  async create(createTaskDto: CreateTaskDto, projectId?: string): Promise<Task> {
+  async create(createTaskDto: CreateTaskDto, projectId?: string): Promise<TaskDocument> {
     const createdTask = new this.taskModel(createTaskDto);
     const savedTask = await createdTask.save();
 
@@ -22,7 +26,7 @@ export class TasksService {
     return savedTask;
   }
 
-  async findAll(): Promise<Task[]> {
+  async findAll(): Promise<TaskDocument[]> {
     return this.taskModel
       .find({ isActive: true })
       .populate('listId creatorId assigneeIds labelIds parentTaskId')
@@ -30,7 +34,7 @@ export class TasksService {
       .exec();
   }
 
-  async findByList(listId: string): Promise<Task[]> {
+  async findByList(listId: string): Promise<TaskDocument[]> {
     return this.taskModel
       .find({ listId: new Types.ObjectId(listId), isActive: true })
       .populate('creatorId assigneeIds labelIds parentTaskId')
@@ -38,7 +42,7 @@ export class TasksService {
       .exec();
   }
 
-  async findByAssignee(assigneeId: string): Promise<Task[]> {
+  async findByAssignee(assigneeId: string): Promise<TaskDocument[]> {
     return this.taskModel
       .find({
         assigneeIds: new Types.ObjectId(assigneeId),
@@ -49,7 +53,7 @@ export class TasksService {
       .exec();
   }
 
-  async findOne(id: string): Promise<Task> {
+  async findOne(id: string): Promise<TaskDocument> {
     const task = await this.taskModel
       .findById(id)
       .populate('listId creatorId assigneeIds labelIds parentTaskId')
@@ -62,7 +66,7 @@ export class TasksService {
     return task;
   }
 
-  async findSubtasks(parentTaskId: string): Promise<Task[]> {
+  async findSubtasks(parentTaskId: string): Promise<TaskDocument[]> {
     return this.taskModel
       .find({
         parentTaskId: new Types.ObjectId(parentTaskId),
@@ -74,7 +78,7 @@ export class TasksService {
       .exec();
   }
 
-  async createSubtask(parentTaskId: string, createTaskDto: CreateTaskDto): Promise<Task> {
+  async createSubtask(parentTaskId: string, createTaskDto: CreateTaskDto): Promise<TaskDocument> {
     const parentTask = await this.findOne(parentTaskId);
     if (!parentTask) {
       throw new NotFoundException(`Parent task with ID ${parentTaskId} not found`);
@@ -91,7 +95,7 @@ export class TasksService {
     return createdSubtask.save();
   }
 
-  async getTaskWithSubtasks(id: string): Promise<Task & { subtasks: Task[] }> {
+  async getTaskWithSubtasks(id: string): Promise<TaskDocument & { subtasks: TaskDocument[] }> {
     const task = await this.findOne(id);
     const subtasks = await this.findSubtasks(id);
 
@@ -112,7 +116,7 @@ export class TasksService {
     return Math.round((completedSubtasks.length / subtasks.length) * 100);
   }
 
-  async update(id: string, updateTaskDto: UpdateTaskDto, userId?: string): Promise<Task> {
+  async update(id: string, updateTaskDto: UpdateTaskDto, userId?: string): Promise<TaskDocument> {
     const oldTask = await this.findOne(id);
 
     const task = await this.taskModel
@@ -127,19 +131,29 @@ export class TasksService {
     // 상태가 변경된 경우 알림 처리
     if (updateTaskDto.status && oldTask.status !== updateTaskDto.status) {
       if (updateTaskDto.status === 'done' && userId) {
-        // 작업 완료 알림 (작업 생성자에게)
-        // NotificationsService 주입이 필요합니다
+        // 작업 완료 이벤트 발행 (작업 생성자에게)
+        if (oldTask.creatorId.toString() !== userId) {
+          // 완료자와 생성자가 다른 경우에만 알림
+          this.notificationEventHelper.emitTaskCompleted(
+            oldTask.creatorId.toString(),
+            task._id.toString(),
+            task.title,
+            userId,
+            '사용자', // 실제로는 User 정보를 조회해야 함
+            'creator@example.com', // 실제로는 User 정보를 조회해야 함
+          );
+        }
       }
     }
 
     return task;
   }
 
-  async updateStatus(id: string, status: string, userId?: string): Promise<Task> {
+  async updateStatus(id: string, status: string, userId?: string): Promise<TaskDocument> {
     return this.update(id, { status }, userId);
   }
 
-  async assignUser(id: string, userId: string, assignedBy?: string): Promise<Task> {
+  async assignUser(id: string, userId: string, assignedBy?: string): Promise<TaskDocument> {
     const task = await this.findOne(id);
     const assigneeIds = task.assigneeIds || [];
 
@@ -148,9 +162,17 @@ export class TasksService {
 
       const updatedTask = await this.update(id, { assigneeIds });
 
-      // 작업 할당 알림
-      if (assignedBy) {
-        // NotificationsService 주입이 필요합니다
+      // 작업 할당 이벤트 발행
+      if (assignedBy && assignedBy !== userId) {
+        // 할당자와 피할당자가 다른 경우에만 알림
+        this.notificationEventHelper.emitTaskAssigned(
+          userId,
+          updatedTask._id.toString(),
+          updatedTask.title,
+          assignedBy,
+          '할당자', // 실제로는 User 정보를 조회해야 함
+          'assignee@example.com', // 실제로는 User 정보를 조회해야 함
+        );
       }
 
       return updatedTask;
@@ -159,14 +181,14 @@ export class TasksService {
     return task;
   }
 
-  async unassignUser(id: string, userId: string): Promise<Task> {
+  async unassignUser(id: string, userId: string): Promise<TaskDocument> {
     const task = await this.findOne(id);
     const assigneeIds = (task.assigneeIds || []).filter((assigneeId) => assigneeId.toString() !== userId);
 
     return this.update(id, { assigneeIds });
   }
 
-  async remove(id: string): Promise<Task> {
+  async remove(id: string): Promise<TaskDocument> {
     const task = await this.taskModel.findByIdAndUpdate(id, { isActive: false }, { new: true }).exec();
 
     if (!task) {
@@ -187,7 +209,7 @@ export class TasksService {
     await this.taskModel.bulkWrite(bulkOps);
   }
 
-  async searchTasks(query: string, userId?: string): Promise<Task[]> {
+  async searchTasks(query: string, userId?: string): Promise<TaskDocument[]> {
     const searchCriteria: any = {
       isActive: true,
       $or: [{ title: { $regex: query, $options: 'i' } }, { description: { $regex: query, $options: 'i' } }],
@@ -204,7 +226,7 @@ export class TasksService {
       .exec();
   }
 
-  async findTasksByDateRange(startDate: Date, endDate: Date, userId?: string): Promise<Task[]> {
+  async findTasksByDateRange(startDate: Date, endDate: Date, userId?: string): Promise<TaskDocument[]> {
     const criteria: any = {
       isActive: true,
       dueDate: {
@@ -224,7 +246,7 @@ export class TasksService {
       .exec();
   }
 
-  async findTasksDueToday(userId?: string): Promise<Task[]> {
+  async findTasksDueToday(userId?: string): Promise<TaskDocument[]> {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const tomorrow = new Date(today);
@@ -233,7 +255,7 @@ export class TasksService {
     return this.findTasksByDateRange(today, tomorrow, userId);
   }
 
-  async findUpcomingTasks(userId?: string): Promise<Task[]> {
+  async findUpcomingTasks(userId?: string): Promise<TaskDocument[]> {
     const today = new Date();
     const weekFromNow = new Date();
     weekFromNow.setDate(weekFromNow.getDate() + 7);

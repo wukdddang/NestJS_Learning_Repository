@@ -1,7 +1,10 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
 
-export type TaskDocument = Task & Document;
+export type TaskDocument = Task &
+  Document & {
+    _id: Types.ObjectId;
+  };
 
 @Schema({ timestamps: true })
 export class Task {

@@ -4,35 +4,37 @@ import { Model, Types } from 'mongoose';
 import { Comment, CommentDocument } from './schemas/comment.schema';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
+import { NotificationEventHelper } from '../notifications/utils/notification-event.helper';
 
 @Injectable()
 export class CommentsService {
-  constructor(@InjectModel(Comment.name) private commentModel: Model<CommentDocument>) {}
+  constructor(
+    @InjectModel(Comment.name) private commentModel: Model<CommentDocument>,
+    private readonly notificationEventHelper: NotificationEventHelper,
+  ) {}
 
-  async create(createCommentDto: CreateCommentDto, projectId?: string, taskTitle?: string): Promise<Comment> {
+  async create(
+    createCommentDto: CreateCommentDto,
+    projectId?: string,
+    taskTitle?: string,
+    taskCreatorId?: string,
+  ): Promise<Comment> {
     const createdComment = new this.commentModel(createCommentDto);
     const savedComment = await createdComment.save();
 
-    // 댓글 생성 시 활동 로그 및 알림 생성
-    if (projectId && taskTitle) {
-      // ActivityLogsService와 NotificationsService 주입이 필요합니다
-      // 여기서는 기본 구조만 남겨둡니다
-      // 활동 로그 생성
-      // await this.activityLogsService.createCommentAddedLog(
-      //   projectId,
-      //   createCommentDto.taskId.toString(),
-      //   createCommentDto.userId.toString(),
-      //   taskTitle
-      // );
-      // 작업 생성자에게 알림 (댓글 작성자가 아닌 경우)
-      // const task = await this.tasksService.findOne(createCommentDto.taskId.toString());
-      // if (task.creatorId.toString() !== createCommentDto.userId.toString()) {
-      //   await this.notificationsService.createCommentAddedNotification(
-      //     task.creatorId.toString(),
-      //     createCommentDto.taskId.toString(),
-      //     createCommentDto.userId.toString()
-      //   );
-      // }
+    // 댓글 생성 시 이벤트 발행
+    if (projectId && taskTitle && taskCreatorId) {
+      // 댓글 작성자와 작업 생성자가 다른 경우에만 알림
+      if (taskCreatorId !== createCommentDto.userId.toString()) {
+        this.notificationEventHelper.emitCommentAdded(
+          taskCreatorId,
+          createCommentDto.taskId.toString(),
+          taskTitle,
+          createCommentDto.userId.toString(),
+          '댓글 작성자', // 실제로는 User 정보를 조회해야 함
+          'creator@example.com', // 실제로는 User 정보를 조회해야 함
+        );
+      }
     }
 
     return savedComment;
@@ -106,6 +108,19 @@ export class CommentsService {
     }
 
     return comment;
+  }
+
+  // 댓글 검색
+  async searchComments(query: string): Promise<Comment[]> {
+    return this.commentModel
+      .find({
+        isActive: true,
+        text: { $regex: query, $options: 'i' },
+      })
+      .populate('taskId userId')
+      .sort({ createdAt: -1 })
+      .limit(20)
+      .exec();
   }
 
   // 댓글 통계

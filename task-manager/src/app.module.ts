@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import { UsersModule } from './users/users.module';
 import { AppConfigModule } from './config/config.module';
 import { AuthModule } from './auth/auth.module';
@@ -16,9 +17,12 @@ import { ActivityLogsModule } from './activity-logs/activity-logs.module';
 import { UserProjectRolesModule } from './user-project-roles/user-project-roles.module';
 import { CalendarModule } from './calendar/calendar.module';
 import { DashboardModule } from './dashboard/dashboard.module';
+import { EmailModule } from './email/email.module';
+import { SearchModule } from './search/search.module';
 
 @Module({
   imports: [
+    EventEmitterModule.forRoot(),
     AppConfigModule,
     DatabaseModule,
     UsersModule,
@@ -36,6 +40,8 @@ import { DashboardModule } from './dashboard/dashboard.module';
     UserProjectRolesModule,
     CalendarModule,
     DashboardModule,
+    EmailModule,
+    SearchModule,
   ],
   controllers: [],
   providers: [],
