@@ -44,12 +44,13 @@ pnpm run start:dev
 ### 3. **Postman 설정**
 
 1. **Collection Import**: `Task Manager API.postman_collection.json` 파일을 Postman에 import
-2. **Environment Variables**: 다음 변수들을 설정
+2. **Environment Variables**: 다음 **고정 값들만** 설정
    ```
    baseUrl: http://localhost:3000
    accessToken: (로그인 후 자동 설정됨)
-   userId: (로그인 후 수동 설정 필요)
    ```
+
+⚠️ **중요**: `userId`, `taskId`, `projectId`, `workspaceId` 등의 **동적 파라미터는 Environment Variables에 저장하지 마세요**. 이들은 API 응답에서 추출하거나 매번 수동으로 입력해야 합니다.
 
 ### 4. **WebSocket 테스트 준비**
 
@@ -93,38 +94,41 @@ socket.on('disconnect', () => {
 ✅ Postman Environment에 토큰 자동 저장
 ```
 
-#### **1.2 사용자 ID 설정**
+#### **1.2 사용자 정보 확인**
 
 ```bash
-# 로그인 응답에서 userId를 확인하고 Postman Environment에 수동 설정
+# 로그인 응답에서 userId를 확인하고 기록해두세요 (Environment에 저장하지 말고)
 # 또는 별도 API로 현재 사용자 정보 조회
 GET /auth/me
+
+# 응답 예시:
+{
+  "id": "64f7b8c9e12345678901234a",  // ← 이 값을 복사해서 필요할 때마다 사용
+  "username": "testuser",
+  "email": "test@example.com"
+}
 ```
 
 #### **1.3 워크스페이스 및 프로젝트 설정**
 
 ```bash
 # Postman Collection: 2. Workspace Setup & 3. Project Setup
-1. "워크스페이스 생성" → workspaceId 자동 저장
-2. "프로젝트 생성" → projectId 자동 저장
-3. "보드 생성" → boardId 자동 저장
+1. "워크스페이스 생성" → 응답에서 workspaceId 복사
+2. "프로젝트 생성" → 응답에서 projectId 복사 (leadUserId는 위에서 얻은 userId 사용)
+3. "보드 생성" → 응답에서 boardId 복사
 
-# 예상 결과:
-✅ 각 리소스가 성공적으로 생성됨
-✅ ID들이 Postman Variables에 자동 저장됨
+# ⚠️ 각 API 호출 시 필요한 ID들을 응답에서 복사해서 다음 요청에 수동으로 입력하세요
 ```
 
 #### **1.4 칸반 보드 구조 생성**
 
 ```bash
 # Postman Collection: 4. Board Lists (Kanban Columns)
-1. "할 일 리스트 생성" → todoListId 저장
-2. "진행 중 리스트 생성" → inProgressListId 저장
-3. "완료 리스트 생성" → doneListId 저장
+1. "할 일 리스트 생성" → 응답에서 listId 복사
+2. "진행 중 리스트 생성" → 응답에서 listId 복사
+3. "완료 리스트 생성" → 응답에서 listId 복사
 
-# 예상 결과:
-✅ 3개의 칸반 컬럼이 생성됨
-✅ 각 리스트 ID가 저장됨
+# 각 리스트 생성 시 위에서 얻은 boardId를 요청 body에 입력하세요
 ```
 
 ---
@@ -136,15 +140,16 @@ GET /auth/me
 ```bash
 # Step 1: 작업 생성
 # Postman Collection: 6. Tasks Management → "작업 생성"
+# 요청 body에 위에서 얻은 listId, creatorId(userId) 등을 입력
 
 # 서버 로그 확인:
 [TASK] Task created: <taskId>
 [EVENT] Task creation logged
 
 # Step 2: 다른 사용자에게 작업 할당 (이벤트 트리거)
-POST /tasks/{{taskId}}/assign
+POST /tasks/[작업생성응답에서_얻은_taskId]/assign
 Body: {
-  "assigneeId": "다른_사용자_ID"
+  "assigneeId": "다른_사용자_ID"  // 새로 회원가입한 사용자 ID 사용
 }
 
 # 예상 서버 로그:
@@ -166,10 +171,10 @@ Body: {
 # Postman Collection: 7. Comments → "댓글 추가"
 POST /comments
 Body: {
-  "taskId": "{{taskId}}",
-  "userId": "{{userId}}",
+  "taskId": "[위에서_얻은_taskId]",
+  "userId": "[현재_사용자_userId]",
   "content": "이벤트 기반 시스템 테스트 댓글입니다.",
-  "projectId": "{{projectId}}",
+  "projectId": "[위에서_얻은_projectId]",
   "taskTitle": "로그인 API 개발"
 }
 
@@ -193,7 +198,7 @@ Body: {
 
 # Step 2: 작업을 완료로 변경 (이벤트 트리거)
 # Postman Collection: 6. Tasks Management → "작업 상태 변경 (완료)"
-PATCH /tasks/{{taskId}}/status
+PATCH /tasks/[위에서_얻은_taskId]/status
 Body: {
   "status": "done"
 }
@@ -220,11 +225,12 @@ Body: {
   "email": "newuser@example.com",
   "password": "password123"
 }
+# 응답에서 새 사용자의 userId를 복사
 
 # 프로젝트에 멤버 초대 (이벤트 트리거)
-POST /projects/{{projectId}}/members
+POST /projects/[위에서_얻은_projectId]/members
 Body: {
-  "userId": "새로운_사용자_ID",
+  "userId": "[새로운_사용자_userId]",
   "role": "member"
 }
 
@@ -315,9 +321,9 @@ db.activitylogs.find().sort({createdAt: -1}).limit(10)
 
 ```bash
 # Postman Collection: 11. Activity Logs
-1. "프로젝트 활동 로그" → 프로젝트 전체 활동 확인
-2. "사용자 최근 활동" → 사용자별 활동 확인
-3. "작업별 활동 로그" → 특정 작업의 모든 활동 확인
+1. "프로젝트 활동 로그" → 프로젝트 전체 활동 확인 (URL에 projectId 입력)
+2. "사용자 최근 활동" → 사용자별 활동 확인 (URL에 userId 입력)
+3. "작업별 활동 로그" → 특정 작업의 모든 활동 확인 (URL에 taskId 입력)
 
 # 예상 결과:
 ✅ 모든 액션이 활동 로그에 기록됨
