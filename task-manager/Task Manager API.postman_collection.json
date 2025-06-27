@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "6f947fa8-9ea9-4fae-bb52-abe587c2f962",
     "name": "Task Manager API (new)",
-    "description": "개인/팀 작업 관리 시스템 API Collection\n\n⚠️ 중요: userId, taskId, projectId 등의 동적 파라미터는 매번 API 응답에서 복사해서 수동으로 입력하세요. Collection Variables에 저장하지 마세요.",
+    "description": "개인/팀 작업 관리 시스템 API Collection\n\n⚠️ 중요: userId, taskId, projectId 등의 동적 파라미터는 매번 API 응답에서 복사해서 Path Variables에 입력하세요. Collection Variables에 저장하지 마세요.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
     "_exporter_id": "37428602"
   },
@@ -49,7 +49,7 @@
                   "    ",
                   "    // userId는 응답에서 확인하고 수동으로 기록하세요",
                   "    console.log('🔑 사용자 ID:', body.userId);",
-                  "    console.log('📝 이 값을 복사해서 필요한 API 요청에 직접 입력하세요');",
+                  "    console.log('📝 이 값을 복사해서 필요한 API 요청의 Path Variables에 입력하세요');",
                   "})"
                 ],
                 "type": "text/javascript",
@@ -92,7 +92,7 @@
                   "if (pm.response.code === 200 || pm.response.code === 201) {",
                   "    const response = pm.response.json();",
                   "    console.log('🏢 워크스페이스 ID:', response._id || response.id);",
-                  "    console.log('📝 이 값을 복사해서 프로젝트 생성 시 workspaceId로 사용하세요');",
+                  "    console.log('📝 이 값을 복사해서 프로젝트 생성 시 Path Variables의 workspaceId에 입력하세요');",
                   "}"
                 ],
                 "type": "text/javascript",
@@ -148,7 +148,7 @@
                   "if (pm.response.code === 200 || pm.response.code === 201) {",
                   "    const response = pm.response.json();",
                   "    console.log('📁 프로젝트 ID:', response._id || response.id);",
-                  "    console.log('📝 이 값을 복사해서 보드 생성 시 projectId로 사용하세요');",
+                  "    console.log('📝 이 값을 복사해서 보드 생성 시 Path Variables의 projectId에 입력하세요');",
                   "}"
                 ],
                 "type": "text/javascript",
@@ -166,7 +166,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"workspaceId\": \"[위에서_얻은_workspaceId_입력]\",\n  \"name\": \"웹사이트 리뉴얼\",\n  \"description\": \"회사 홈페이지 리뉴얼 프로젝트\",\n  \"leadUserId\": \"[로그인_응답에서_얻은_userId_입력]\"\n}"
+              "raw": "{\n  \"workspaceId\": \":workspaceId\",\n  \"name\": \"웹사이트 리뉴얼\",\n  \"description\": \"회사 홈페이지 리뉴얼 프로젝트\",\n  \"leadUserId\": \":userId\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/projects",
@@ -186,7 +186,7 @@
                   "if (pm.response.code === 200 || pm.response.code === 201) {",
                   "    const response = pm.response.json();",
                   "    console.log('📋 보드 ID:', response._id || response.id);",
-                  "    console.log('📝 이 값을 복사해서 리스트 생성 시 boardId로 사용하세요');",
+                  "    console.log('📝 이 값을 복사해서 리스트 생성 시 Path Variables의 boardId에 입력하세요');",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -203,7 +203,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"projectId\": \"[위에서_얻은_projectId_입력]\",\n  \"name\": \"개발 보드\"\n}"
+              "raw": "{\n  \"projectId\": \":projectId\",\n  \"name\": \"개발 보드\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/boards",
@@ -257,12 +257,18 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"userId\": \"[초대할_사용자_ID_입력]\",\n  \"role\": \"member\"\n}"
+              "raw": "{\n  \"userId\": \":inviteUserId\",\n  \"role\": \"member\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/projects/[projectId_입력]/members",
+              "raw": "{{baseUrl}}/projects/:projectId/members",
               "host": ["{{baseUrl}}"],
-              "path": ["projects", "[projectId_입력]", "members"]
+              "path": ["projects", ":projectId", "members"],
+              "variable": [
+                {
+                  "key": "projectId",
+                  "value": ""
+                }
+              ]
             }
           },
           "response": []
@@ -282,7 +288,7 @@
                   "if (pm.response.code === 200 || pm.response.code === 201) {",
                   "    const response = pm.response.json();",
                   "    console.log('📝 할 일 리스트 ID:', response._id || response.id);",
-                  "    console.log('📝 이 값을 복사해서 작업 생성 시 listId로 사용하세요');",
+                  "    console.log('📝 이 값을 복사해서 작업 생성 시 Path Variables의 listId에 입력하세요');",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -299,7 +305,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"boardId\": \"[위에서_얻은_boardId_입력]\",\n  \"name\": \"할 일\",\n  \"orderIndex\": 0\n}"
+              "raw": "{\n  \"boardId\": \":boardId\",\n  \"name\": \"할 일\",\n  \"orderIndex\": 0\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/lists",
@@ -336,7 +342,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"boardId\": \"[위에서_얻은_boardId_입력]\",\n  \"name\": \"진행 중\",\n  \"orderIndex\": 1\n}"
+              "raw": "{\n  \"boardId\": \":boardId\",\n  \"name\": \"진행 중\",\n  \"orderIndex\": 1\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/lists",
@@ -373,7 +379,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"boardId\": \"[위에서_얻은_boardId_입력]\",\n  \"name\": \"완료\",\n  \"orderIndex\": 2\n}"
+              "raw": "{\n  \"boardId\": \":boardId\",\n  \"name\": \"완료\",\n  \"orderIndex\": 2\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/lists",
@@ -398,7 +404,7 @@
                   "if (pm.response.code === 200 || pm.response.code === 201) {",
                   "    const response = pm.response.json();",
                   "    console.log('🏷️ 레이블 ID:', response._id || response.id);",
-                  "    console.log('📝 이 값을 복사해서 작업 생성 시 labelIds에 사용하세요');",
+                  "    console.log('📝 이 값을 복사해서 작업 생성 시 Path Variables의 labelId에 입력하세요');",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -415,7 +421,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"projectId\": \"[위에서_얻은_projectId_입력]\",\n  \"name\": \"긴급\",\n  \"color\": \"#ff4444\"\n}"
+              "raw": "{\n  \"projectId\": \":projectId\",\n  \"name\": \"긴급\",\n  \"color\": \"#ff4444\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/labels",
@@ -431,9 +437,15 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/labels/project/[projectId_입력]",
+              "raw": "{{baseUrl}}/labels/project/:projectId",
               "host": ["{{baseUrl}}"],
-              "path": ["labels", "project", "[projectId_입력]"]
+              "path": ["labels", "project", ":projectId"],
+              "variable": [
+                {
+                  "key": "projectId",
+                  "value": ""
+                }
+              ]
             }
           },
           "response": []
@@ -453,7 +465,7 @@
                   "if (pm.response.code === 200 || pm.response.code === 201) {",
                   "    const response = pm.response.json();",
                   "    console.log('✅ 작업 ID:', response._id || response.id);",
-                  "    console.log('📝 이 값을 복사해서 작업 할당, 댓글 추가 등에 사용하세요');",
+                  "    console.log('📝 이 값을 복사해서 작업 할당, 댓글 추가 등에 Path Variables의 taskId에 입력하세요');",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -470,7 +482,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"listId\": \"[위에서_얻은_할일리스트_ID_입력]\",\n  \"title\": \"로그인 API 개발\",\n  \"description\": \"JWT 기반 로그인 기능 구현\",\n  \"dueDate\": \"2024-02-15T09:00:00Z\",\n  \"creatorId\": \"[로그인_응답에서_얻은_userId_입력]\",\n  \"assigneeIds\": [\"[로그인_응답에서_얻은_userId_입력]\"],\n  \"labelIds\": [\"[위에서_얻은_labelId_입력]\"],\n  \"priority\": \"high\",\n  \"status\": \"todo\"\n}"
+              "raw": "{\n  \"listId\": \":todoListId\",\n  \"title\": \"로그인 API 개발\",\n  \"description\": \"JWT 기반 로그인 기능 구현\",\n  \"dueDate\": \"2024-02-15T09:00:00Z\",\n  \"creatorId\": \":userId\",\n  \"assigneeIds\": [\":userId\"],\n  \"labelIds\": [\":labelId\"],\n  \"priority\": \"high\",\n  \"status\": \"todo\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/tasks",
@@ -511,12 +523,18 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"assigneeId\": \"[할당받을_사용자_ID_입력]\"\n}"
+              "raw": "{\n  \"assigneeId\": \":assigneeId\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/tasks/[위에서_얻은_taskId_입력]/assign",
+              "raw": "{{baseUrl}}/tasks/:taskId/assign",
               "host": ["{{baseUrl}}"],
-              "path": ["tasks", "[위에서_얻은_taskId_입력]", "assign"]
+              "path": ["tasks", ":taskId", "assign"],
+              "variable": [
+                {
+                  "key": "taskId",
+                  "value": ""
+                }
+              ]
             }
           },
           "response": []
@@ -548,12 +566,18 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"JWT 토큰 생성 로직\",\n  \"description\": \"JWT 토큰 생성 및 검증 로직 구현\",\n  \"creatorId\": \"[로그인_응답에서_얻은_userId_입력]\",\n  \"priority\": \"medium\",\n  \"status\": \"todo\"\n}"
+              "raw": "{\n  \"title\": \"JWT 토큰 생성 로직\",\n  \"description\": \"JWT 토큰 생성 및 검증 로직 구현\",\n  \"creatorId\": \":userId\",\n  \"priority\": \"medium\",\n  \"status\": \"todo\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/tasks/[위에서_얻은_taskId_입력]/subtasks",
+              "raw": "{{baseUrl}}/tasks/:taskId/subtasks",
               "host": ["{{baseUrl}}"],
-              "path": ["tasks", "[위에서_얻은_taskId_입력]", "subtasks"]
+              "path": ["tasks", ":taskId", "subtasks"],
+              "variable": [
+                {
+                  "key": "taskId",
+                  "value": ""
+                }
+              ]
             }
           },
           "response": []
@@ -573,9 +597,15 @@
               "raw": "{\n  \"status\": \"in-progress\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/tasks/[위에서_얻은_taskId_입력]/status",
+              "raw": "{{baseUrl}}/tasks/:taskId/status",
               "host": ["{{baseUrl}}"],
-              "path": ["tasks", "[위에서_얻은_taskId_입력]", "status"]
+              "path": ["tasks", ":taskId", "status"],
+              "variable": [
+                {
+                  "key": "taskId",
+                  "value": ""
+                }
+              ]
             }
           },
           "response": []
@@ -613,9 +643,15 @@
               "raw": "{\n  \"status\": \"done\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/tasks/[위에서_얻은_taskId_입력]/status",
+              "raw": "{{baseUrl}}/tasks/:taskId/status",
               "host": ["{{baseUrl}}"],
-              "path": ["tasks", "[위에서_얻은_taskId_입력]", "status"]
+              "path": ["tasks", ":taskId", "status"],
+              "variable": [
+                {
+                  "key": "taskId",
+                  "value": ""
+                }
+              ]
             }
           },
           "response": []
@@ -626,9 +662,15 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/tasks/[위에서_얻은_taskId_입력]/with-subtasks",
+              "raw": "{{baseUrl}}/tasks/:taskId/with-subtasks",
               "host": ["{{baseUrl}}"],
-              "path": ["tasks", "[위에서_얻은_taskId_입력]", "with-subtasks"]
+              "path": ["tasks", ":taskId", "with-subtasks"],
+              "variable": [
+                {
+                  "key": "taskId",
+                  "value": ""
+                }
+              ]
             }
           },
           "response": []
@@ -639,9 +681,15 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/tasks/[위에서_얻은_taskId_입력]/progress",
+              "raw": "{{baseUrl}}/tasks/:taskId/progress",
               "host": ["{{baseUrl}}"],
-              "path": ["tasks", "[위에서_얻은_taskId_입력]", "progress"]
+              "path": ["tasks", ":taskId", "progress"],
+              "variable": [
+                {
+                  "key": "taskId",
+                  "value": ""
+                }
+              ]
             }
           },
           "response": []
@@ -682,7 +730,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"taskId\": \"[위에서_얻은_taskId_입력]\",\n  \"userId\": \"[로그인_응답에서_얻은_userId_입력]\",\n  \"content\": \"작업을 시작했습니다! JWT 구현 중입니다.\",\n  \"projectId\": \"[위에서_얻은_projectId_입력]\",\n  \"taskTitle\": \"로그인 API 개발\"\n}"
+              "raw": "{\n  \"taskId\": \":taskId\",\n  \"userId\": \":userId\",\n  \"content\": \"작업을 시작했습니다! JWT 구현 중입니다.\",\n  \"projectId\": \":projectId\",\n  \"taskTitle\": \"로그인 API 개발\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/comments",
@@ -698,9 +746,15 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/comments/task/[위에서_얻은_taskId_입력]",
+              "raw": "{{baseUrl}}/comments/task/:taskId",
               "host": ["{{baseUrl}}"],
-              "path": ["comments", "task", "[위에서_얻은_taskId_입력]"]
+              "path": ["comments", "task", ":taskId"],
+              "variable": [
+                {
+                  "key": "taskId",
+                  "value": ""
+                }
+              ]
             }
           },
           "response": []
@@ -711,9 +765,15 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/comments/task/[위에서_얻은_taskId_입력]/stats",
+              "raw": "{{baseUrl}}/comments/task/:taskId/stats",
               "host": ["{{baseUrl}}"],
-              "path": ["comments", "task", "[위에서_얻은_taskId_입력]", "stats"]
+              "path": ["comments", "task", ":taskId", "stats"],
+              "variable": [
+                {
+                  "key": "taskId",
+                  "value": ""
+                }
+              ]
             }
           },
           "response": []
@@ -729,7 +789,7 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/tasks/search?q=로그인&userId=[로그인_응답에서_얻은_userId_입력]",
+              "raw": "{{baseUrl}}/tasks/search?q=로그인&userId=:userId",
               "host": ["{{baseUrl}}"],
               "path": ["tasks", "search"],
               "query": [
@@ -739,7 +799,7 @@
                 },
                 {
                   "key": "userId",
-                  "value": "[로그인_응답에서_얻은_userId_입력]"
+                  "value": ":userId"
                 }
               ]
             }
@@ -752,13 +812,13 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/calendar/tasks/today?userId=[로그인_응답에서_얻은_userId_입력]",
+              "raw": "{{baseUrl}}/calendar/tasks/today?userId=:userId",
               "host": ["{{baseUrl}}"],
               "path": ["calendar", "tasks", "today"],
               "query": [
                 {
                   "key": "userId",
-                  "value": "[로그인_응답에서_얻은_userId_입력]"
+                  "value": ":userId"
                 }
               ]
             }
@@ -771,13 +831,13 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/calendar/tasks/upcoming?userId=[로그인_응답에서_얻은_userId_입력]",
+              "raw": "{{baseUrl}}/calendar/tasks/upcoming?userId=:userId",
               "host": ["{{baseUrl}}"],
               "path": ["calendar", "tasks", "upcoming"],
               "query": [
                 {
                   "key": "userId",
-                  "value": "[로그인_응답에서_얻은_userId_입력]"
+                  "value": ":userId"
                 }
               ]
             }
@@ -790,7 +850,7 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/calendar/tasks/month?year=2024&month=2&userId=[로그인_응답에서_얻은_userId_입력]",
+              "raw": "{{baseUrl}}/calendar/tasks/month?year=2024&month=2&userId=:userId",
               "host": ["{{baseUrl}}"],
               "path": ["calendar", "tasks", "month"],
               "query": [
@@ -804,7 +864,7 @@
                 },
                 {
                   "key": "userId",
-                  "value": "[로그인_응답에서_얻은_userId_입력]"
+                  "value": ":userId"
                 }
               ]
             }
@@ -822,9 +882,15 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/dashboard/user/[로그인_응답에서_얻은_userId_입력]",
+              "raw": "{{baseUrl}}/dashboard/user/:userId",
               "host": ["{{baseUrl}}"],
-              "path": ["dashboard", "user", "[로그인_응답에서_얻은_userId_입력]"]
+              "path": ["dashboard", "user", ":userId"],
+              "variable": [
+                {
+                  "key": "userId",
+                  "value": ""
+                }
+              ]
             }
           },
           "response": []
@@ -835,9 +901,15 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/dashboard/project/[위에서_얻은_projectId_입력]",
+              "raw": "{{baseUrl}}/dashboard/project/:projectId",
               "host": ["{{baseUrl}}"],
-              "path": ["dashboard", "project", "[위에서_얻은_projectId_입력]"]
+              "path": ["dashboard", "project", ":projectId"],
+              "variable": [
+                {
+                  "key": "projectId",
+                  "value": ""
+                }
+              ]
             }
           },
           "response": []
@@ -848,9 +920,15 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/dashboard/user/[로그인_응답에서_얻은_userId_입력]/stats",
+              "raw": "{{baseUrl}}/dashboard/user/:userId/stats",
               "host": ["{{baseUrl}}"],
-              "path": ["dashboard", "user", "[로그인_응답에서_얻은_userId_입력]", "stats"]
+              "path": ["dashboard", "user", ":userId", "stats"],
+              "variable": [
+                {
+                  "key": "userId",
+                  "value": ""
+                }
+              ]
             }
           },
           "response": []
@@ -861,9 +939,15 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/dashboard/user/[로그인_응답에서_얻은_userId_입력]/productivity",
+              "raw": "{{baseUrl}}/dashboard/user/:userId/productivity",
               "host": ["{{baseUrl}}"],
-              "path": ["dashboard", "user", "[로그인_응답에서_얻은_userId_입력]", "productivity"]
+              "path": ["dashboard", "user", ":userId", "productivity"],
+              "variable": [
+                {
+                  "key": "userId",
+                  "value": ""
+                }
+              ]
             }
           },
           "response": []
@@ -879,9 +963,15 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/notifications/user/[로그인_응답에서_얻은_userId_입력]/unread",
+              "raw": "{{baseUrl}}/notifications/user/:userId/unread",
               "host": ["{{baseUrl}}"],
-              "path": ["notifications", "user", "[로그인_응답에서_얻은_userId_입력]", "unread"]
+              "path": ["notifications", "user", ":userId", "unread"],
+              "variable": [
+                {
+                  "key": "userId",
+                  "value": ""
+                }
+              ]
             }
           },
           "response": []
@@ -892,9 +982,15 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/notifications/user/[로그인_응답에서_얻은_userId_입력]/unread-count",
+              "raw": "{{baseUrl}}/notifications/user/:userId/unread-count",
               "host": ["{{baseUrl}}"],
-              "path": ["notifications", "user", "[로그인_응답에서_얻은_userId_입력]", "unread-count"]
+              "path": ["notifications", "user", ":userId", "unread-count"],
+              "variable": [
+                {
+                  "key": "userId",
+                  "value": ""
+                }
+              ]
             }
           },
           "response": []
@@ -905,9 +1001,15 @@
             "method": "PATCH",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/notifications/user/[로그인_응답에서_얻은_userId_입력]/read-all",
+              "raw": "{{baseUrl}}/notifications/user/:userId/read-all",
               "host": ["{{baseUrl}}"],
-              "path": ["notifications", "user", "[로그인_응답에서_얻은_userId_입력]", "read-all"]
+              "path": ["notifications", "user", ":userId", "read-all"],
+              "variable": [
+                {
+                  "key": "userId",
+                  "value": ""
+                }
+              ]
             }
           },
           "response": []
@@ -974,13 +1076,19 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/activity-logs/project/[위에서_얻은_projectId_입력]?limit=20",
+              "raw": "{{baseUrl}}/activity-logs/project/:projectId?limit=20",
               "host": ["{{baseUrl}}"],
-              "path": ["activity-logs", "project", "[위에서_얻은_projectId_입력]"],
+              "path": ["activity-logs", "project", ":projectId"],
               "query": [
                 {
                   "key": "limit",
                   "value": "20"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "projectId",
+                  "value": ""
                 }
               ]
             }
@@ -993,13 +1101,19 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/activity-logs/user/[로그인_응답에서_얻은_userId_입력]/recent?limit=10",
+              "raw": "{{baseUrl}}/activity-logs/user/:userId/recent?limit=10",
               "host": ["{{baseUrl}}"],
-              "path": ["activity-logs", "user", "[로그인_응답에서_얻은_userId_입력]", "recent"],
+              "path": ["activity-logs", "user", ":userId", "recent"],
               "query": [
                 {
                   "key": "limit",
                   "value": "10"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "userId",
+                  "value": ""
                 }
               ]
             }
@@ -1012,9 +1126,15 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/activity-logs/task/[위에서_얻은_taskId_입력]",
+              "raw": "{{baseUrl}}/activity-logs/task/:taskId",
               "host": ["{{baseUrl}}"],
-              "path": ["activity-logs", "task", "[위에서_얻은_taskId_입력]"]
+              "path": ["activity-logs", "task", ":taskId"],
+              "variable": [
+                {
+                  "key": "taskId",
+                  "value": ""
+                }
+              ]
             }
           },
           "response": []
