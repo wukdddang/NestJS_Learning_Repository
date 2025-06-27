@@ -22,30 +22,30 @@ NestJS + Mongoose를 사용하여 구현되었으며, 이벤트 기반 아키텍
 ```mermaid
 graph TB
     subgraph "👤 User Management"
-        U[User]
+        U["👤 User"]
     end
 
     subgraph "🏢 Workspace Domain"
-        WS[Workspace]
-        P[Project]
-        UPR[UserProjectRole]
+        WS["🏢 Workspace"]
+        P["📁 Project"]
+        UPR["👥 UserProjectRole"]
     end
 
     subgraph "📋 Task Management"
-        B[Board]
-        L[List]
-        T[Task]
-        LB[Label]
+        B["📋 Board"]
+        L["📝 List"]
+        T["✅ Task"]
+        LB["🏷️ Label"]
     end
 
     subgraph "💬 Communication"
-        C[Comment]
-        AT[Attachment]
+        C["💬 Comment"]
+        AT["📎 Attachment"]
     end
 
     subgraph "📊 Tracking & Monitoring"
-        AL[ActivityLog]
-        N[Notification]
+        AL["📈 ActivityLog"]
+        N["🔔 Notification"]
     end
 
     %% Domain connections
@@ -72,19 +72,6 @@ graph TB
     T --> N
 
     LB --> T
-
-    style U fill:#e1f5fe
-    style WS fill:#f3e5f5
-    style P fill:#f3e5f5
-    style UPR fill:#f3e5f5
-    style B fill:#e8f5e8
-    style L fill:#e8f5e8
-    style T fill:#e8f5e8
-    style LB fill:#e8f5e8
-    style C fill:#fff3e0
-    style AT fill:#fff3e0
-    style AL fill:#fce4ec
-    style N fill:#fce4ec
 ```
 
 ### 📝 **상세 엔티티 관계도**
@@ -93,196 +80,196 @@ graph TB
 erDiagram
     %% 👤 User Management Domain
     User {
-        ObjectId _id PK
-        string username UK
-        string email UK
-        string password
-        string fullName
-        string avatar
-        boolean isEmailVerified
-        boolean isActive
-        date createdAt
-        date updatedAt
+        ObjectId _id PK "🔑"
+        string username UK "👤"
+        string email UK "📧"
+        string password "🔒"
+        string fullName "📝"
+        string avatar "🖼️"
+        boolean isEmailVerified "✅"
+        boolean isActive "🟢"
+        date createdAt "📅"
+        date updatedAt "🔄"
     }
 
     %% 🏢 Workspace Management Domain
     Workspace {
-        ObjectId _id PK
-        ObjectId owner FK
-        string name
-        string description
-        ObjectId[] members
-        boolean isActive
-        date createdAt
-        date updatedAt
+        ObjectId _id PK "🔑"
+        ObjectId owner FK "👤"
+        string name "🏢"
+        string description "📝"
+        ObjectId[] members "👥"
+        boolean isActive "🟢"
+        date createdAt "📅"
+        date updatedAt "🔄"
     }
 
     Project {
-        ObjectId _id PK
-        ObjectId workspaceId FK
-        string name
-        string description
-        ObjectId leadUserId FK
-        boolean isActive
-        string color
-        string icon
-        date createdAt
-        date updatedAt
+        ObjectId _id PK "🔑"
+        ObjectId workspaceId FK "🏢"
+        string name "📁"
+        string description "📝"
+        ObjectId leadUserId FK "👑"
+        boolean isActive "🟢"
+        string color "🎨"
+        string icon "🎯"
+        date createdAt "📅"
+        date updatedAt "🔄"
     }
 
     UserProjectRole {
-        ObjectId _id PK
-        ObjectId userId FK
-        ObjectId projectId FK
-        string role
-        boolean isActive
-        date createdAt
-        date updatedAt
+        ObjectId _id PK "🔑"
+        ObjectId userId FK "👤"
+        ObjectId projectId FK "📁"
+        string role "👥"
+        boolean isActive "🟢"
+        date createdAt "📅"
+        date updatedAt "🔄"
     }
 
     %% 📋 Task Management Domain
     Board {
-        ObjectId _id PK
-        ObjectId projectId FK
-        string name
-        string description
-        number orderIndex
-        boolean isActive
-        date createdAt
-        date updatedAt
+        ObjectId _id PK "🔑"
+        ObjectId projectId FK "📁"
+        string name "📋"
+        string description "📝"
+        number orderIndex "🔢"
+        boolean isActive "🟢"
+        date createdAt "📅"
+        date updatedAt "🔄"
     }
 
     List {
-        ObjectId _id PK
-        ObjectId boardId FK
-        string name
-        number orderIndex
-        boolean isActive
-        date createdAt
-        date updatedAt
+        ObjectId _id PK "🔑"
+        ObjectId boardId FK "📋"
+        string name "📝"
+        number orderIndex "🔢"
+        boolean isActive "🟢"
+        date createdAt "📅"
+        date updatedAt "🔄"
     }
 
     Task {
-        ObjectId _id PK
-        ObjectId listId FK
-        string title
-        string description
-        date dueDate
-        ObjectId creatorId FK
-        ObjectId[] assigneeIds
-        ObjectId[] labelIds
-        number orderIndex
-        string status
-        string priority
-        boolean isActive
-        ObjectId parentTaskId FK
-        boolean isSubtask
-        date createdAt
-        date updatedAt
+        ObjectId _id PK "🔑"
+        ObjectId listId FK "📝"
+        string title "✅"
+        string description "📄"
+        date dueDate "⏰"
+        ObjectId creatorId FK "👤"
+        ObjectId[] assigneeIds "👥"
+        ObjectId[] labelIds "🏷️"
+        number orderIndex "🔢"
+        string status "📊"
+        string priority "⚡"
+        boolean isActive "🟢"
+        ObjectId parentTaskId FK "🔗"
+        boolean isSubtask "📎"
+        date createdAt "📅"
+        date updatedAt "🔄"
     }
 
     Label {
-        ObjectId _id PK
-        ObjectId projectId FK
-        string name
-        string color
-        string description
-        boolean isActive
-        date createdAt
-        date updatedAt
+        ObjectId _id PK "🔑"
+        ObjectId projectId FK "📁"
+        string name "🏷️"
+        string color "🎨"
+        string description "📝"
+        boolean isActive "🟢"
+        date createdAt "📅"
+        date updatedAt "🔄"
     }
 
     %% 💬 Communication Domain
     Comment {
-        ObjectId _id PK
-        ObjectId taskId FK
-        ObjectId userId FK
-        string text
-        ObjectId parentCommentId FK
-        boolean isEdited
-        boolean isActive
-        date createdAt
-        date updatedAt
+        ObjectId _id PK "🔑"
+        ObjectId taskId FK "✅"
+        ObjectId userId FK "👤"
+        string text "💬"
+        ObjectId parentCommentId FK "🔗"
+        boolean isEdited "✏️"
+        boolean isActive "🟢"
+        date createdAt "📅"
+        date updatedAt "🔄"
     }
 
     Attachment {
-        ObjectId _id PK
-        ObjectId taskId FK
-        ObjectId uploadedBy FK
-        string fileName
-        string originalName
-        string fileUrl
-        number fileSize
-        string mimeType
-        boolean isActive
-        date createdAt
-        date updatedAt
+        ObjectId _id PK "🔑"
+        ObjectId taskId FK "✅"
+        ObjectId uploadedBy FK "👤"
+        string fileName "📎"
+        string originalName "📄"
+        string fileUrl "🔗"
+        number fileSize "📏"
+        string mimeType "🎭"
+        boolean isActive "🟢"
+        date createdAt "📅"
+        date updatedAt "🔄"
     }
 
     %% 📊 Tracking & Monitoring Domain
     ActivityLog {
-        ObjectId _id PK
-        ObjectId projectId FK
-        ObjectId taskId FK
-        ObjectId userId FK
-        string actionType
-        string details
-        string previousValue
-        string newValue
-        date createdAt
-        date updatedAt
+        ObjectId _id PK "🔑"
+        ObjectId projectId FK "📁"
+        ObjectId taskId FK "✅"
+        ObjectId userId FK "👤"
+        string actionType "🎬"
+        string details "📝"
+        string previousValue "⬅️"
+        string newValue "➡️"
+        date createdAt "📅"
+        date updatedAt "🔄"
     }
 
     Notification {
-        ObjectId _id PK
-        ObjectId userId FK
-        string message
-        string type
-        boolean isRead
-        ObjectId relatedTaskId FK
-        ObjectId relatedProjectId FK
-        ObjectId triggeredBy FK
-        boolean isActive
-        date createdAt
-        date updatedAt
+        ObjectId _id PK "🔑"
+        ObjectId userId FK "👤"
+        string message "🔔"
+        string type "📋"
+        boolean isRead "👁️"
+        ObjectId relatedTaskId FK "✅"
+        ObjectId relatedProjectId FK "📁"
+        ObjectId triggeredBy FK "👤"
+        boolean isActive "🟢"
+        date createdAt "📅"
+        date updatedAt "🔄"
     }
 
     %% 👤 User Management Relations
-    User ||--o{ Workspace : "owns"
-    User ||--o{ Project : "leads"
-    User ||--o{ UserProjectRole : "has roles"
-    User ||--o{ Task : "creates"
-    User ||--o{ Comment : "writes"
-    User ||--o{ Attachment : "uploads"
-    User ||--o{ ActivityLog : "performs"
-    User ||--o{ Notification : "receives"
+    User ||--o{ Workspace : "owns 🏢"
+    User ||--o{ Project : "leads 👑"
+    User ||--o{ UserProjectRole : "has roles 👥"
+    User ||--o{ Task : "creates ✅"
+    User ||--o{ Comment : "writes 💬"
+    User ||--o{ Attachment : "uploads 📎"
+    User ||--o{ ActivityLog : "performs 📈"
+    User ||--o{ Notification : "receives 🔔"
 
     %% 🏢 Workspace Management Relations
-    Workspace ||--o{ Project : "contains"
-    Project ||--o{ Board : "has boards"
-    Project ||--o{ Label : "defines labels"
-    Project ||--o{ UserProjectRole : "has members"
-    Project ||--o{ ActivityLog : "tracks activities"
-    UserProjectRole }o--|| User : "assigns user"
-    UserProjectRole }o--|| Project : "to project"
+    Workspace ||--o{ Project : "contains 📁"
+    Project ||--o{ Board : "has boards 📋"
+    Project ||--o{ Label : "defines labels 🏷️"
+    Project ||--o{ UserProjectRole : "has members 👥"
+    Project ||--o{ ActivityLog : "tracks activities 📈"
+    UserProjectRole }o--|| User : "assigns user 👤"
+    UserProjectRole }o--|| Project : "to project 📁"
 
     %% 📋 Task Management Relations
-    Board ||--o{ List : "contains"
-    List ||--o{ Task : "holds"
-    Task }o--o{ User : "assigned to"
-    Task }o--o{ Label : "tagged with"
-    Task ||--o{ Task : "has subtasks"
+    Board ||--o{ List : "contains 📝"
+    List ||--o{ Task : "holds ✅"
+    Task }o--o{ User : "assigned to 👤"
+    Task }o--o{ Label : "tagged with 🏷️"
+    Task ||--o{ Task : "has subtasks 🔗"
 
     %% 💬 Communication Relations
-    Task ||--o{ Comment : "has comments"
-    Task ||--o{ Attachment : "has files"
-    Comment }o--o| Comment : "replies to"
+    Task ||--o{ Comment : "has comments 💬"
+    Task ||--o{ Attachment : "has files 📎"
+    Comment }o--o| Comment : "replies to 🔗"
 
     %% 📊 Tracking Relations
-    Task ||--o{ ActivityLog : "generates logs"
-    Task ||--o{ Notification : "triggers alerts"
-    Project ||--o{ ActivityLog : "overall tracking"
-    Notification }o--o| User : "triggered by"
+    Task ||--o{ ActivityLog : "generates logs 📈"
+    Task ||--o{ Notification : "triggers alerts 🔔"
+    Project ||--o{ ActivityLog : "overall tracking 📊"
+    Notification }o--o| User : "triggered by 👤"
 ```
 
 ### 🎯 **도메인별 상세 설명**
@@ -325,6 +312,8 @@ erDiagram
 2. **계층적 권한**: Workspace → Project → Task 순으로 권한 상속
 3. **이벤트 기반 알림**: 모든 도메인의 변경사항이 Notification으로 전파
 4. **완전한 추적성**: ActivityLog가 모든 도메인의 변경사항 기록
+5. **실시간 통신**: WebSocket을 통한 즉시 알림 전송
+6. **다중 채널 알림**: 인앱 + 이메일 + WebSocket 통합 처리
 
 ---
 
