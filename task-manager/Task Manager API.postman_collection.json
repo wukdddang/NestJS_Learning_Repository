@@ -1,7 +1,7 @@
 {
   "info": {
     "_postman_id": "6f947fa8-9ea9-4fae-bb52-abe587c2f962",
-    "name": "Task Manager API",
+    "name": "Task Manager API (new)",
     "description": "개인/팀 작업 관리 시스템 API Collection",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
     "_exporter_id": "37428602"
